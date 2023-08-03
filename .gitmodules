@@ -1,0 +1,4 @@
+[submodule "peta/utils"]
+	path = peta/utils
+	url = https://github.com/tanganke/pyutils
+	branch = submodule

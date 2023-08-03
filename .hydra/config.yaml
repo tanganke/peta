@@ -1,0 +1,42 @@
+model:
+  name: ViT-B-16
+  model_name_or_path: openai/clip-vit-base-patch16
+  batch_size: 128
+  input_size: 224
+  num_grad_accumulation: 1
+dataset:
+  name: Cars
+  datamodule:
+    _target_: peta.datamodules.StanfordCarsDataModule
+    root: data
+    batch_size: ${batch_size}
+    num_workers: ${num_workers}
+    pin_memory: false
+    train_transform: null
+    test_transform: null
+    download: false
+seed: 42
+fast_debug_dev: false
+model_name: ${model.name}
+finetuning_mode: standard
+lora_config:
+  _target_: peft.LoraConfig
+  target_modules:
+  - v_porj
+  - q_proj
+  inference_mode: false
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.1
+datamodule: ${dataset.datamodule}
+dataset_name: ${dataset.name}
+num_workers: 12
+batch_size: ???
+learning_rate: 1.0e-05
+warmup_steps: 200
+max_steps: 2000
+weight_decay: 0.1
+num_grad_accumulation: ${model.num_grad_accumulation}
+fabric:
+  accelerator: gpu
+  devices: 2

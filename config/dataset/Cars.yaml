@@ -1,0 +1,11 @@
+name: Cars
+
+datamodule:
+  _target_: peta.datamodules.StanfordCarsDataModule
+  root: data
+  batch_size: ${batch_size}
+  num_workers: ${num_workers}
+  pin_memory: false
+  train_transform: null
+  test_transform: null
+  download: false

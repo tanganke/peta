@@ -1,0 +1,7 @@
+defaults:
+  - model: t5-large
+  - peft: nopeft
+  - dataset: glue-cola
+  - _self_
+
+seed: 42
