@@ -1,7 +1,21 @@
 defaults:
-  - model: t5-large
-  - peft: nopeft
+  - model: flan-t5-base
+  - peft: lora-16
   - dataset: glue-cola
+  - optim: adam
   - _self_
 
 seed: 42
+
+# DataLoader
+batch_size: 32
+num_workers: 8
+
+# pytorch lightning Trainer
+trainer:
+  accelerator: gpu
+  devices: 1
+  max_epochs: 1
+  accumulate_grad_batches: 1
+  profiler: simple
+  fast_dev_run: true

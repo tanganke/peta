@@ -1,8 +1,8 @@
 peft_config:
   _target_: peft.LoraConfig
   target_modules:
-    - v_porj
-    - q_proj
+    - q
+    - v
   inference_mode: false
   r: 16
   lora_alpha: 32
