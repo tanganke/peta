@@ -6,10 +6,9 @@ from typing import Any
 import hydra
 import lightning as L
 import lightning.pytorch as pl
-from lightning.pytorch.utilities.types import STEP_OUTPUT
 import peft
 import torch
-from datasets import load_dataset
+from datasets import DatasetDict, load_dataset
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 from torch import Tensor, nn
@@ -17,9 +16,9 @@ from torch.utils.data import DataLoader
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 import peta
+from peta.utils import TimeIt, TitledLog
 from peta.utils.logging.rich import pprint_yaml, setup_colorlogging
 from peta.utils.ml.devices import num_devices
-from peta.utils import TitledLog, TimeIt
 
 log = logging.getLogger(__name__)
 
@@ -74,7 +73,7 @@ def main(cfg: DictConfig):
         L.seed_everything(cfg.seed)
 
     # load pretrained model and tokenizer
-    with TitledLog("load pretrained model and tokenizer", log.info):
+    with TitledLog("load pretrained model and tokenizer", log_fn=log.info):
         tokenizer = instantiate(cfg.model.tokenizer)
 
         model = instantiate(cfg.model.model)
@@ -90,8 +89,8 @@ def main(cfg: DictConfig):
         module = Seq2SeqLMModule(model, tokenizer, optim_cfg=cfg.optim)
 
     # load dataset
-    with TitledLog("load datasets and dataloaders", log.info):
-        datasets = instantiate(cfg.dataset.datasets)
+    with TitledLog("load datasets and dataloaders", log_fn=log.info):
+        datasets: DatasetDict = instantiate(cfg.dataset.datasets)
         assert (
             cfg.batch_size % num_devices(cfg.trainer.devices) == 0
         ), "batch_size must be divisible by the number of devices."
@@ -101,6 +100,7 @@ def main(cfg: DictConfig):
             batch_size=batch_size,
             shuffle=True,
         )
+        
 
     trainer = pl.Trainer(**cfg.trainer)
     trainer.fit(module, train_loader)

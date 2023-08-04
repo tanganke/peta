@@ -1,7 +1,7 @@
 defaults:
   - model: flan-t5-base
   - peft: lora-16
-  - dataset: glue-cola
+  - dataset: super_glue-copa
   - optim: adam
   - _self_
 
