@@ -111,16 +111,16 @@ hydra:
   overrides:
     hydra:
     - hydra.run.dir="/data/users/tanganke/projects/task_arithmetic/peta"
-    - hydra.job.name=train_ddp_process_1
+    - hydra.job.name=train_ddp_process_3
     - hydra.mode=RUN
     task: []
   job:
-    name: train_ddp_process_1
+    name: train_ddp_process_3
     chdir: null
     override_dirname: ''
     id: ???
     num: ???
-    config_name: finetune_clip
+    config_name: finetune_lm
     env_set: {}
     env_copy: []
     config:
@@ -147,8 +147,10 @@ hydra:
       provider: schema
     output_dir: /data/users/tanganke/projects/task_arithmetic/peta
     choices:
-      dataset: Cars
-      model: ViT-B-16
+      optim: adam
+      dataset: glue-cola
+      peft: lora-16
+      model: flan-t5-base
       hydra/env: default
       hydra/callbacks: null
       hydra/job_logging: default

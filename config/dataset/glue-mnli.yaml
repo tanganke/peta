@@ -2,3 +2,6 @@ datasets:
   _target_: datasets.load_dataset
   path: glue
   name: mnli
+
+preprocessor:
+  _target_: peta.tasks.MNLI_Preprocessor

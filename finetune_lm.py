@@ -1,4 +1,5 @@
 """This script finetunes a pretrained language model on a text-to-text dataset."""
+import os
 import logging
 from pathlib import Path
 from typing import Any
@@ -13,7 +14,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, default_data_collator
 
 import peta
 from peta.utils import TimeIt, TitledLog
@@ -21,6 +22,9 @@ from peta.utils.logging.rich import pprint_yaml, setup_colorlogging
 from peta.utils.ml.devices import num_devices
 
 log = logging.getLogger(__name__)
+
+# disable tokenizers parallelism
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 class Seq2SeqLMModule(pl.LightningModule):
@@ -91,6 +95,20 @@ def main(cfg: DictConfig):
     # load dataset
     with TitledLog("load datasets and dataloaders", log_fn=log.info):
         datasets: DatasetDict = instantiate(cfg.dataset.datasets)
+
+        # convert the task to text-to-text format
+        if hasattr(cfg.dataset, "preprocessor"):
+            preprocessor = instantiate(
+                cfg.dataset.preprocessor,
+                tokenizer=tokenizer,
+                tokenizer_kwargs=cfg.model.tokenizer_kwargs
+                if hasattr(cfg.model, "tokenizer_kwargs")
+                else None,
+            )
+            datasets = datasets.map(
+                preprocessor,
+                **cfg.dataset.map_kwargs if hasattr(cfg.dataset, "map_kwargs") else {},
+            )
         assert (
             cfg.batch_size % num_devices(cfg.trainer.devices) == 0
         ), "batch_size must be divisible by the number of devices."
@@ -99,8 +117,8 @@ def main(cfg: DictConfig):
             datasets["train"],
             batch_size=batch_size,
             shuffle=True,
+            collate_fn=default_data_collator,
         )
-        
 
     trainer = pl.Trainer(**cfg.trainer)
     trainer.fit(module, train_loader)

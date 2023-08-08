@@ -2,8 +2,8 @@ defaults:
   - hf_lm
   - _self_
 
-# https://huggingface.co/google/flan-t5-xl
-model_name_or_path: google/flan-t5-xl
+# https://huggingface.co/google/flan-t5-large
+model_name_or_path: google/flan-t5-large
 
 tokenizer_kwargs:
   padding: max_length

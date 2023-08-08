@@ -1,7 +1,7 @@
 defaults:
   - model: flan-t5-base
   - peft: lora-16
-  - dataset: super_glue-copa
+  - dataset: glue-cola
   - optim: adam
   - _self_
 
@@ -14,8 +14,8 @@ num_workers: 8
 # pytorch lightning Trainer
 trainer:
   accelerator: gpu
-  devices: 1
+  devices: 4
   max_epochs: 1
   accumulate_grad_batches: 1
   profiler: simple
-  fast_dev_run: true
+  fast_dev_run: false

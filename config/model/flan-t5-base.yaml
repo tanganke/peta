@@ -4,3 +4,8 @@ defaults:
 
 # https://huggingface.co/t5-large
 model_name_or_path: google/flan-t5-base
+
+tokenizer_kwargs:
+  padding: max_length
+  truncation: true
+  return_tensors: pt
