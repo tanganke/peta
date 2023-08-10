@@ -72,7 +72,9 @@ class RTE_Preprocessor(DatasetPreprocessor):
         else:
             # batched
             input_text, target_text = [], []
-            for sentence1, sentence2, label in zip(example['sentence1'], example['sentence2'], example['label']):
+            for sentence1, sentence2, label in zip(
+                example["sentence1"], example["sentence2"], example["label"]
+            ):
                 _input_text, _target_text = self.preprocess(sentence1, sentence2, label)
                 input_text.append(_input_text)
                 target_text.append(_target_text)
@@ -180,13 +182,37 @@ class QNLI_Preprocessor(DatasetPreprocessor):
     dataset URL: https://huggingface.co/datasets/glue/viewer/qnli
     """
 
+    def preprocess(self, question: str, sentence: str, label: int):
+        assert isinstance(question, str)
+        assert isinstance(sentence, str)
+        assert isinstance(label, int)
+        input_text = "qnli question: {question} sentence: {sentence}".format(
+            question=question, sentence=sentence
+        )
+        if label in [0, 1]:
+            target_text = "not_entailment" if label == 1 else "entailment"
+        else:
+            target_text = ""
+        return input_text, target_text
+
     def __call__(self, example):
         """
         Preprocess the QNLI dataset into a text-to-text format.
         """
-        assert example["label"] in [0, 1]
-        input_text = "qnli question: {question} sentence: {sentence}".format(**example)
-        target_text = "not_entailment" if example["label"] == 1 else "entailment"
+        if isinstance(example["question"], str):
+            # not batched
+            input_text, target_text = self.preprocess(
+                example["question"], example["sentence"], example["label"]
+            )
+        else:
+            # batched
+            input_text, target_text = [], []
+            for question, sentence, label in zip(
+                example["question"], example["sentence"], example["label"]
+            ):
+                _input_text, _target_text = self.preprocess(question, sentence, label)
+                input_text.append(_input_text)
+                target_text.append(_target_text)
 
         return preprocess(
             tokenizer=self.tokenizer,
