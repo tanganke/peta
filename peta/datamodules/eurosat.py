@@ -59,13 +59,21 @@ class EuroSATDataModule(pl.LightningDataModule):
         self.train_transform = train_transform
         self.test_transform = test_transform
 
-        self.train_dataset = datasets.ImageFolder(self.train_dir, transform=self.train_transform)
-        self.val_dataset = datasets.ImageFolder(self.val_dir, transform=self.test_transform)
-        self.test_dataset = datasets.ImageFolder(self.test_dir, transform=self.test_transform)
+        self.train_dataset = datasets.ImageFolder(
+            self.train_dir, transform=self.train_transform
+        )
+        self.val_dataset = datasets.ImageFolder(
+            self.val_dir, transform=self.test_transform
+        )
+        self.test_dataset = datasets.ImageFolder(
+            self.test_dir, transform=self.test_transform
+        )
 
     def _init_classnames(self):
         idx_to_class = dict((v, k) for k, v in self.train_dataset.class_to_idx.items())
-        self.classes = [idx_to_class[i].replace("_", " ") for i in range(len(idx_to_class))]
+        self.classes = [
+            idx_to_class[i].replace("_", " ") for i in range(len(idx_to_class))
+        ]
         self.classes = [_pretify_classname(c) for c in self.classes]
         ours_to_open_ai = {
             "annual crop": "annual crop land",

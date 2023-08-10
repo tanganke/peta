@@ -58,13 +58,19 @@ class PyTorchGTSRB(VisionDataset):
 
         self._split = verify_str_arg(split, "split", ("train", "test"))
         self._base_folder = pathlib.Path(root) / "gtsrb"
-        self._target_folder = self._base_folder / "GTSRB" / ("Training" if self._split == "train" else "Final_Test/Images")
+        self._target_folder = (
+            self._base_folder
+            / "GTSRB"
+            / ("Training" if self._split == "train" else "Final_Test/Images")
+        )
 
         if download:
             self.download()
 
         if not self._check_exists():
-            raise RuntimeError("Dataset not found. You can use download=True to download it")
+            raise RuntimeError(
+                "Dataset not found. You can use download=True to download it"
+            )
 
         if self._split == "train":
             _, class_to_idx = _find_classes(str(self._target_folder))
@@ -77,7 +83,9 @@ class PyTorchGTSRB(VisionDataset):
             with open(self._base_folder / "GT-final_test.csv") as csv_file:
                 samples = [
                     (str(self._target_folder / row["Filename"]), int(row["ClassId"]))
-                    for row in csv.DictReader(csv_file, delimiter=";", skipinitialspace=True)
+                    for row in csv.DictReader(
+                        csv_file, delimiter=";", skipinitialspace=True
+                    )
                 ]
 
         self._samples = samples
@@ -106,7 +114,9 @@ class PyTorchGTSRB(VisionDataset):
         if self._check_exists():
             return
 
-        base_url = "https://sid.erda.dk/public/archives/daaeac0d7ce1152aea9b61d9f1e19370/"
+        base_url = (
+            "https://sid.erda.dk/public/archives/daaeac0d7ce1152aea9b61d9f1e19370/"
+        )
 
         if self._split == "train":
             download_and_extract_archive(
@@ -128,7 +138,7 @@ class PyTorchGTSRB(VisionDataset):
 
 
 class GTSRBDataModule(pl.LightningDataModule):
-    
+
     # from https://github.com/openai/CLIP/blob/e184f608c5d5e58165682f7c332c3a8b4c1545f2/data/prompts.md
     classes = [
         "red and white circle 20 kph speed limit",
@@ -188,8 +198,12 @@ class GTSRBDataModule(pl.LightningDataModule):
     ):
         super().__init__()
 
-        self.train_dataset = PyTorchGTSRB(root, split="train", transform=train_transform, download=download)
-        self.test_dataset = PyTorchGTSRB(root, split="test", transform=test_transform, download=download)
+        self.train_dataset = PyTorchGTSRB(
+            root, split="train", transform=train_transform, download=download
+        )
+        self.test_dataset = PyTorchGTSRB(
+            root, split="test", transform=test_transform, download=download
+        )
 
         self.loader_kwargs = {
             "batch_size": batch_size,

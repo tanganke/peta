@@ -1,3 +1,5 @@
+name: glue-cola
+
 datasets:
   _target_: datasets.load_dataset
   path: glue

@@ -1,4 +1,15 @@
+name: glue-mrpc
+
 datasets:
   _target_: datasets.load_dataset
   path: glue
   name: mrpc
+
+preprocessor:
+  _target_: peta.tasks.MRPC_Preprocessor
+
+map_kwargs:
+  remove_columns: ["sentence1", "sentence2", "label", "idx"]
+  batched: true
+  num_proc: 1
+  desc: Running tokenizer on dataset

@@ -1,1 +1,9 @@
-[]
+- model=flan-t5-base
+- peft=nopeft
+- model.linearize=false
+- dataset=glue-rte
+- batch_size=16
+- optim.optimizer.lr=1e-5
+- optim.optimizer.weight_decay=0
+- trainer.max_steps=2000
+- trainer.devices=[0,1,2,3]

@@ -289,9 +289,13 @@ class RESISC45DataModule(pl.LightningDataModule):
             "pin_memory": pin_memory,
         }
 
-        self.train_dataset = RESISC45Dataset(root, split="train", transforms=train_transform)
+        self.train_dataset = RESISC45Dataset(
+            root, split="train", transforms=train_transform
+        )
         self.val_dataset = RESISC45Dataset(root, split="val", transforms=test_transform)
-        self.test_dataset = RESISC45Dataset(root, split="test", transforms=test_transform)
+        self.test_dataset = RESISC45Dataset(
+            root, split="test", transforms=test_transform
+        )
 
         self.classes = [" ".join(c.split("_")) for c in self.train_dataset.classes]
 

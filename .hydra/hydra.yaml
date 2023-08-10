@@ -113,11 +113,20 @@ hydra:
     - hydra.run.dir="/data/users/tanganke/projects/task_arithmetic/peta"
     - hydra.job.name=train_ddp_process_3
     - hydra.mode=RUN
-    task: []
+    task:
+    - model=flan-t5-base
+    - peft=nopeft
+    - model.linearize=false
+    - dataset=glue-rte
+    - batch_size=16
+    - optim.optimizer.lr=1e-5
+    - optim.optimizer.weight_decay=0
+    - trainer.max_steps=2000
+    - trainer.devices=[0,1,2,3]
   job:
     name: train_ddp_process_3
     chdir: null
-    override_dirname: ''
+    override_dirname: batch_size=16,dataset=glue-rte,model.linearize=false,model=flan-t5-base,optim.optimizer.lr=1e-5,optim.optimizer.weight_decay=0,peft=nopeft,trainer.devices=[0,1,2,3],trainer.max_steps=2000
     id: ???
     num: ???
     config_name: finetune_lm
@@ -148,8 +157,8 @@ hydra:
     output_dir: /data/users/tanganke/projects/task_arithmetic/peta
     choices:
       optim: adam
-      dataset: glue-cola
-      peft: lora-16
+      dataset: glue-rte
+      peft: nopeft
       model: flan-t5-base
       hydra/env: default
       hydra/callbacks: null

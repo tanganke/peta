@@ -1,3 +1,5 @@
+name: glue-mnli
+
 datasets:
   _target_: datasets.load_dataset
   path: glue
@@ -5,3 +7,9 @@ datasets:
 
 preprocessor:
   _target_: peta.tasks.MNLI_Preprocessor
+
+map_kwargs:
+  remove_columns: ["idx", "hypothesis", "premise", "label"]
+  batched: true
+  num_proc: 1
+  desc: Running tokenizer on dataset

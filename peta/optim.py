@@ -40,7 +40,9 @@ class CosineAnnealingWithWarmup:
         It contains an entry for every variable in self.__dict__ which
         is not the optimizer.
         """
-        return {key: value for key, value in self.__dict__.items() if key != "optimizer"}
+        return {
+            key: value for key, value in self.__dict__.items() if key != "optimizer"
+        }
 
     def load_state_dict(self, state_dict):
         """Loads the schedulers state.
@@ -60,7 +62,11 @@ class CosineAnnealingWithWarmup:
             if step_idx < warmup_length:
                 lr = _warmup_lr(base_lr, warmup_length, step_idx)
             else:
-                lr = _cos_lr(base_lr, self.max_steps - warmup_length, step_idx - warmup_length)
+                lr = _cos_lr(
+                    base_lr, self.max_steps - warmup_length, step_idx - warmup_length
+                )
             param_group["lr"] = lr  # assign learning rate
 
-        self._last_lr = [param_group["lr"] for param_group in self.optimizer.param_groups]
+        self._last_lr = [
+            param_group["lr"] for param_group in self.optimizer.param_groups
+        ]

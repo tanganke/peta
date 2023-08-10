@@ -17,11 +17,17 @@ class StanfordCarsDataModule(pl.LightningDataModule):
     ):
         super().__init__()
 
-        self.train_dataset = StanfordCars(root, split="train", transform=train_transform, download=download)
-        self.test_dataset = StanfordCars(root, split="test", transform=test_transform, download=download)
+        self.train_dataset = StanfordCars(
+            root, split="train", transform=train_transform, download=download
+        )
+        self.test_dataset = StanfordCars(
+            root, split="test", transform=test_transform, download=download
+        )
 
         idx_to_class = dict((v, k) for k, v in self.train_dataset.class_to_idx.items())
-        self.classes = [idx_to_class[i].replace("_", " ") for i in range(len(idx_to_class))]
+        self.classes = [
+            idx_to_class[i].replace("_", " ") for i in range(len(idx_to_class))
+        ]
 
         self.loader_kwargs = {
             "batch_size": batch_size,

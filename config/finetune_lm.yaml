@@ -15,7 +15,9 @@ num_workers: 8
 trainer:
   accelerator: gpu
   devices: 4
-  max_epochs: 1
+  max_epochs: null
+  max_steps: 2000
   accumulate_grad_batches: 1
   profiler: simple
+  enable_checkpointing: false # manually save checkpoints
   fast_dev_run: false

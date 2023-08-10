@@ -1,4 +1,15 @@
+name: glue-stsb
+
 datasets:
   _target_: datasets.load_dataset
   path: glue
   name: stsb
+
+preprocessor:
+  _target_: peta.tasks.STSB_Preprocessor
+
+map_kwargs:
+  remove_columns: ["sentence1", "sentence2", "label", "idx"]
+  batched: true
+  num_proc: 1
+  desc: Running tokenizer on dataset

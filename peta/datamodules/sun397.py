@@ -40,8 +40,16 @@ def process_dataset(txt_file, downloaded_data_path, output_folder):
 
 if __name__ == "__main__":
     downloaded_data_path = "path/to/downloaded/SUN/data"
-    process_dataset("Training_01.txt", downloaded_data_path, os.path.join(downloaded_data_path, "train"))
-    process_dataset("Testing_01.txt", downloaded_data_path, os.path.join(downloaded_data_path, "val"))
+    process_dataset(
+        "Training_01.txt",
+        downloaded_data_path,
+        os.path.join(downloaded_data_path, "train"),
+    )
+    process_dataset(
+        "Testing_01.txt",
+        downloaded_data_path,
+        os.path.join(downloaded_data_path, "val"),
+    )
 
 
 class SUN397DataModule(pl.LightningDataModule):
@@ -68,11 +76,17 @@ class SUN397DataModule(pl.LightningDataModule):
             "pin_memory": pin_memory,
         }
 
-        self.train_dataset = datasets.ImageFolder(self.train_dir, transform=self.train_transform)
-        self.test_dataset = datasets.ImageFolder(self.test_dir, transform=self.test_transform)
+        self.train_dataset = datasets.ImageFolder(
+            self.train_dir, transform=self.train_transform
+        )
+        self.test_dataset = datasets.ImageFolder(
+            self.test_dir, transform=self.test_transform
+        )
 
         idx_to_class = dict((v, k) for k, v in self.train_dataset.class_to_idx.items())
-        self.classes = [idx_to_class[i][2:].replace("_", " ") for i in range(len(idx_to_class))]
+        self.classes = [
+            idx_to_class[i][2:].replace("_", " ") for i in range(len(idx_to_class))
+        ]
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, shuffle=True, **self.loader_kwargs)

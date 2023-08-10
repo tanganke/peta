@@ -29,8 +29,12 @@ class MNISTDataModule(pl.LightningDataModule):
             "pin_memory": pin_memory,
         }
 
-        self.train_dataset = datasets.MNIST(self.root, train=True, transform=self.train_transform, download=download)
-        self.test_dataset = datasets.MNIST(self.root, train=False, transform=self.test_transform, download=download)
+        self.train_dataset = datasets.MNIST(
+            self.root, train=True, transform=self.train_transform, download=download
+        )
+        self.test_dataset = datasets.MNIST(
+            self.root, train=False, transform=self.test_transform, download=download
+        )
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, shuffle=True, **self.loader_kwargs)

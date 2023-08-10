@@ -6,31 +6,26 @@ model:
     _target_: transformers.AutoTokenizer.from_pretrained
     pretrained_model_name_or_path: ${..model_name_or_path}
   model_name_or_path: google/flan-t5-base
+  name: flan-t5-base
   tokenizer_kwargs:
     padding: max_length
     truncation: true
     return_tensors: pt
+  linearize: false
 peft:
-  peft_config:
-    _target_: peft.LoraConfig
-    target_modules:
-    - q
-    - v
-    inference_mode: false
-    r: 16
-    lora_alpha: 32
-    lora_dropout: 0.1
-  seed: 42
+  peft_config: null
 dataset:
+  name: glue-rte
   datasets:
     _target_: datasets.load_dataset
     path: glue
-    name: cola
+    name: rte
   preprocessor:
-    _target_: peta.tasks.CoLA_Preprocessor
+    _target_: peta.tasks.RTE_Preprocessor
   map_kwargs:
     remove_columns:
-    - sentence
+    - sentence1
+    - sentence2
     - label
     - idx
     batched: true
@@ -39,14 +34,21 @@ dataset:
 optim:
   optimizer:
     _target_: torch.optim.Adam
-    lr: 0.001
+    lr: 1.0e-05
+    weight_decay: 0
 seed: 42
-batch_size: 32
+batch_size: 16
 num_workers: 8
 trainer:
   accelerator: gpu
-  devices: 4
-  max_epochs: 1
+  devices:
+  - 0
+  - 1
+  - 2
+  - 3
+  max_epochs: null
+  max_steps: 2000
   accumulate_grad_batches: 1
   profiler: simple
+  enable_checkpointing: false
   fast_dev_run: false
