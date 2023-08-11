@@ -23,6 +23,7 @@ from torchvision import transforms
 from tqdm import tqdm
 from transformers import CLIPModel, CLIPProcessor
 
+from peta.metrics.accuracy import Accuracy
 from peta.models.clip import (
     CLIP_MODELS,
     freeze_unless_image_model,
@@ -30,7 +31,6 @@ from peta.models.clip import (
     load_clip_model,
 )
 from peta.optim import CosineAnnealingWithWarmup
-from peta.metrics.accuracy import Accuracy
 from peta.utils.logging import TitledLog, setup_colorlogging
 
 log = logging.getLogger(__name__)
