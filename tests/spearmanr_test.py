@@ -1,7 +1,8 @@
-import unittest
 import math
+import unittest
 
 import torch
+
 from peta.metrics.spearmanr import spearmanr
 
 
