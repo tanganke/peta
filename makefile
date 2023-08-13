@@ -32,14 +32,14 @@ lora:
 		model=${MODEL} peft=${PEFT} model.linearize=false \
 		dataset=${DATASET} \
 		batch_size=16 \
-		optim.optimizer.lr=1e-5 optim.optimizer.weight_decay=0 \
+		optim.optimizer.lr=3e-5 optim.optimizer.weight_decay=0 \
 		trainer.max_steps=2000 trainer.devices=${DEVICES}
 
 	${FINETUNE_SCRIPT} \
 		model=${MODEL} peft=${PEFT} model.linearize=false \
 		dataset=${DATASET} \
 		batch_size=16 \
-		optim.optimizer.lr=2e-5 optim.optimizer.weight_decay=0 \
+		optim.optimizer.lr=4e-5 optim.optimizer.weight_decay=0 \
 		trainer.max_steps=2000 trainer.devices=${DEVICES}
 
 # l_lora
@@ -51,14 +51,14 @@ l_lora:
 		model=${MODEL} peft=${PEFT} model.linearize=true \
 		dataset=${DATASET} \
 		batch_size=16 \
-		optim.optimizer.lr=1e-5 optim.optimizer.weight_decay=0 \
+		optim.optimizer.lr=3e-5 optim.optimizer.weight_decay=0 \
 		trainer.max_steps=2000 trainer.devices=${DEVICES}
 
 	${FINETUNE_SCRIPT} \
 		model=${MODEL} peft=${PEFT} model.linearize=true \
 		dataset=${DATASET} \
 		batch_size=16 \
-		optim.optimizer.lr=2e-5 optim.optimizer.weight_decay=0 \
+		optim.optimizer.lr=4e-5 optim.optimizer.weight_decay=0 \
 		trainer.max_steps=2000 trainer.devices=${DEVICES}
 
 # Examples:

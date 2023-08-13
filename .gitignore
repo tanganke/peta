@@ -2,6 +2,7 @@
 /outputs/
 /logs/
 /lightning_logs/
+/.hydra/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
