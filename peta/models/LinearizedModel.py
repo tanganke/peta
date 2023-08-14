@@ -121,11 +121,9 @@ class LinearizedModelWraper(nn.Module):
         if init_model is None:
             init_model = model
         assert not hasattr(self, "params0")
-        params0 = deepcopy(
-            OrderedDict((k, v.detach()) for k, v in init_model.named_parameters())
-        )
-        self.params0_keys = params0.keys()
-        self.params0_values = nn.ParameterList(params0.values())
+        params0 = deepcopy([(k, v.detach()) for k, v in init_model.named_parameters()])
+        self.params0_keys = [k for k, v in params0]
+        self.params0_values = nn.ParameterList([v for k, v in params0])
         for p in self.params0_values:
             p.requires_grad_(False)
 

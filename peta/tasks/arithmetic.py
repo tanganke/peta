@@ -1,6 +1,6 @@
 import torch
 from typing import Dict
-from torch import Tensor
+from torch import Tensor, nn
 from typing import List
 
 
@@ -21,7 +21,8 @@ def state_dict_sub(a: Dict, b: Dict, strict: bool = True):
 
     diff = {}
     for k in a:
-        diff[k] = a[k] - b[k]
+        if k in b:
+            diff[k] = a[k] - b[k]
     return diff
 
 
@@ -42,7 +43,8 @@ def state_dict_add(a: Dict, b: Dict, strict: bool = True):
 
     diff = {}
     for k in a:
-        diff[k] = a[k] + b[k]
+        if k in b:
+            diff[k] = a[k] + b[k]
     return diff
 
 
