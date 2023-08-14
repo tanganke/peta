@@ -1,5 +1,5 @@
 """
-load data from `peta.xlsx`, sheet `finetuned performance`
+load data from `(fullfinetuned)|(lora)|(l_lora)_results_v{version}.csv`, gather the results of single task evaluation， save to `signle_task.csv'.
 
 the `config` column is a DictConfig string, which contains the config of the model
 extract some hyperparameters from `config` column and add them to the dataframe.
@@ -11,6 +11,7 @@ import math
 import os
 import sys
 import seaborn as sns
+import itertools
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -20,7 +21,26 @@ from omegaconf import DictConfig
 
 # %%
 # load data
-data = pd.read_excel("peta.xlsx", sheet_name="finetuned performance")
+all_data = None
+for method in ["fullfinetuned", "lora", "l_lora"]:
+    for version in itertools.count():
+        csv_file = f"{method}_results_v{version}.csv"
+        if not os.path.exists(csv_file):
+            break
+        else:
+            data = pd.read_csv(csv_file)
+            # set coulmn `method` to `method`
+            data["method"] = method
+            print(f"load {csv_file}")
+            if all_data is None:
+                all_data = data
+            else:
+                all_data = pd.concat([all_data, data], ignore_index=True)
+
+# data = pd.read_excel("peta.xlsx", sheet_name="finetuned performance")
+data = all_data
+# drop column `Unnamed: 0`
+data = data.drop(columns=["Unnamed: 0"])
 
 # %%
 # process data
@@ -36,7 +56,7 @@ for row_id in range(len(data)):
     data.at[row_id, "weight_decay"] = config.optim.optimizer.weight_decay
 
 # %%
-data = data.sort_values(by=["Model", "Task", "Method", "config"])
+data = data.sort_values(by=["model", "dataset", "method", "config"])
 data.to_csv("single_task.csv", index=False)
 
 # %%
@@ -45,10 +65,10 @@ plot the results as bar chart, the y axis is `Accuracy`, the x axis is `Task` an
 cheat the same Task together, assign different color to different Method.
 Each method runs under different hyperparameters, so the same method may have different accuracy, choose the maximum accuracy.
 """
-max_data = data.groupby(["Task", "Method"]).max("Accuracy").reset_index()
+max_data = data.groupby(["dataset", "method"]).max("accuracy").reset_index()
 
 plt.figure(figsize=(14, 5))
-ax = sns.barplot(data=max_data, x="Task", y="Accuracy", hue="Method")
+ax = sns.barplot(data=max_data, x="dataset", y="accuracy", hue="method")
 for p in ax.containers:
     ax.bar_label(
         p,
@@ -63,7 +83,7 @@ plt.show()
 # standard derivation as errorbar
 plt.figure(figsize=(14, 5))
 ax: plt.Axes = sns.barplot(
-    data=data, x="Task", y="Accuracy", hue="Method", errorbar="sd"
+    data=data, x="dataset", y="accuracy", hue="method", errorbar="sd"
 )
 for p in ax.containers:
     ax.bar_label(
@@ -76,4 +96,6 @@ plt.title("single task performance")
 # save pdf
 plt.savefig("single_task.pdf")
 plt.show()
+
+
 # %%
