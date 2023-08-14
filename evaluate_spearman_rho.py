@@ -1,3 +1,6 @@
+"""
+evaluate spearman's rho for glue-stsb
+"""
 # %% import libraries
 import logging
 import os
@@ -232,21 +235,63 @@ def load_validation_dataloaer(cfg: DictConfig, batch_size=32):
 
     return val_loader
 
+
+def evaluate_spearman_rho(model, val_loader: DataLoader, tokenizer):
+    from tqdm import tqdm
+
+    model = model.eval()
+    all_preds: List[str] = []
+    all_labels: List[str] = []
+    for batch_idx, batch in enumerate(tqdm(val_loader)):
+        with torch.no_grad():
+            outputs = model.generate(batch["input_ids"])
+            output_text = tokenizer.batch_decode(outputs, skip_special_tokens=True)
+
+            labels = [remove_special_tokens(tokenizer, l) for l in batch["labels"]]
+            labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
+
+            all_preds.extend(output_text)
+            all_labels.extend(labels)
+
+    # save `all_preds` and `all_labels`
+    with open("temp/all_preds.txt", "w") as f:
+        for preds in all_preds:
+            for pred in preds:
+                f.write(pred + "\n")
+    with open("temp/all_labels.txt", "w") as f:
+        for labels in all_labels:
+            for label in labels:
+                f.write(label + "\n")
+
+    # calculate spearman's rho
+    # 1. convert string list `all_preds` and `all_labels` to numpy array
+    # 2. compute spearman's rho
+    from scipy.stats import spearmanr
+
+    def parse_flost(s: str):
+        import math
+
+        try:
+            return float(s)
+        except:
+            return 0.0
+
+    all_preds = np.array([parse_flost(pred) for pred in all_preds])
+    all_labels = np.array([parse_flost(label) for label in all_labels])
+    rho = spearmanr(all_preds, all_labels)[0]
+    return rho
+
+
+# %%
 validation_dataloaders = {}
 
-# lora
-# for version in range(8, 10):
-#     lora_results = {"model": [], "dataset": [], "accuracy": [], "config": []}
+# %%fullfinetuned
+# for version in range(0, 2):
+#     fft_results = {"model": [], "dataset": [], "accuracy": [], "config": []}
 
 #     model_name = "flan-t5-base"
-#     finetune_mode = "lora"
+#     finetune_mode = "standard"
 #     for dataset_name in [
-#         "glue-cola",
-#         "glue-mnli",
-#         "glue-mrpc",
-#         "glue-qqp",
-#         "glue-rte",
-#         "glue-sst2",
 #         "glue-stsb",
 #     ]:
 #         model = load_finetuned_model(model_name, dataset_name, finetune_mode, version)
@@ -260,37 +305,67 @@ validation_dataloaders = {}
 
 #         model = fabric.setup_module(model)
 #         val_loader = fabric.setup_dataloaders(val_loader)
-#         acc = evaluate_accuracy(model, val_loader, tokenizer)
+#         rho = evaluate_spearman_rho(model, val_loader, tokenizer)
+
+#         fft_results["model"].append(model_name)
+#         fft_results["dataset"].append(dataset_name)
+#         fft_results["accuracy"].append(rho)
+#         fft_results["config"].append(str(cfg))
+
+#         print("model: {}, dataset: {}, rho: {}".format(model_name, dataset_name, rho))
+
+#     fft_results = pd.DataFrame(fft_results)
+#     fft_results
+
+#     os.makedirs(f"results/{model_name}", exist_ok=True)
+#     fft_results.to_csv(
+#         f"results/{model_name}/fullfinetuned_results_glue-stsb_v{version}.csv"
+#     )
+
+
+# %% lora
+# for version in range(0, 10):
+#     lora_results = {"model": [], "dataset": [], "accuracy": [], "config": []}
+
+#     model_name = "flan-t5-base"
+#     finetune_mode = "lora"
+#     for dataset_name in [
+#         "glue-stsb",
+#     ]:
+#         model = load_finetuned_model(model_name, dataset_name, finetune_mode, version)
+#         cfg, model, tokenizer = model["config"], model["model"], model["tokenizer"]
+
+#         if dataset_name in validation_dataloaders:
+#             val_loader = validation_dataloaders[dataset_name]
+#         else:
+#             val_loader = load_validation_dataloaer(cfg)
+#             validation_dataloaders[dataset_name] = val_loader
+
+#         model = fabric.setup_module(model)
+#         val_loader = fabric.setup_dataloaders(val_loader)
+#         rho = evaluate_spearman_rho(model, val_loader, tokenizer)
 
 #         lora_results["model"].append(model_name)
 #         lora_results["dataset"].append(dataset_name)
-#         lora_results["accuracy"].append(acc)
+#         lora_results["accuracy"].append(rho)
 #         lora_results["config"].append(str(cfg))
 
-#         print(
-#             "model: {}, dataset: {}, accuracy: {}".format(model_name, dataset_name, acc)
-#         )
+#         print("model: {}, dataset: {}, rho: {}".format(model_name, dataset_name, rho))
 
 #     lora_results = pd.DataFrame(lora_results)
 #     lora_results
 
 #     os.makedirs(f"results/{model_name}", exist_ok=True)
-#     lora_results.to_csv(f"results/{model_name}/lora_results_v{version}.csv")
+#     lora_results.to_csv(f"results/{model_name}/lora_results_glue-stsb_v{version}.csv")
 
 # l_lora
-for version in range(7, 8):
+for version in range(0, 12):
     l_lora_results = {"model": [], "dataset": [], "accuracy": [], "config": []}
 
     model_name = "flan-t5-base"
     finetune_mode = "l_lora"
     for dataset_name in [
-        # "glue-cola",
-        # "glue-mnli",
-        # "glue-mrpc",
-        # "glue-qqp",
-        "glue-rte",
-        # "glue-sst2",
-        # "glue-stsb",
+        "glue-stsb",
     ]:
         model = load_finetuned_model(
             model_name, dataset_name, finetune_mode, version
@@ -305,19 +380,21 @@ for version in range(7, 8):
 
         model = fabric.setup_module(model)
         val_loader = fabric.setup_dataloaders(val_loader)
-        acc = evaluate_accuracy(model, val_loader, tokenizer)
+        rho = evaluate_spearman_rho(model, val_loader, tokenizer)
 
         l_lora_results["model"].append(model_name)
         l_lora_results["dataset"].append(dataset_name)
-        l_lora_results["accuracy"].append(acc)
+        l_lora_results["accuracy"].append(rho)
         l_lora_results["config"].append(cfg)
 
-        print(
-            "model: {}, dataset: {}, accuracy: {}".format(model_name, dataset_name, acc)
-        )
+        print("model: {}, dataset: {}, rho: {}".format(model_name, dataset_name, rho))
 
     l_lora_results = pd.DataFrame(l_lora_results)
     l_lora_results
 
     os.makedirs(f"results/{model_name}", exist_ok=True)
-    l_lora_results.to_csv(f"results/{model_name}/l_lora_results_v{version}.csv")
+    l_lora_results.to_csv(
+        f"results/{model_name}/l_lora_results_glue-stsb_v{version}.csv"
+    )
+
+# %%

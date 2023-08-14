@@ -13,6 +13,7 @@ import sys
 import seaborn as sns
 import itertools
 
+from IPython.display import display
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,25 +32,40 @@ for method in ["fullfinetuned", "lora", "l_lora"]:
             data = pd.read_csv(csv_file)
             # set coulmn `method` to `method`
             data["method"] = method
+            data["version"] = version
+            data = data.drop_duplicates(ignore_index=True)
             print(f"load {csv_file}")
             if all_data is None:
                 all_data = data
             else:
                 all_data = pd.concat([all_data, data], ignore_index=True)
 
-# data = pd.read_excel("peta.xlsx", sheet_name="finetuned performance")
+display(all_data.head())
+# %%
+# replace glue-stsb accuracy with spearman rho, data is loaded from `{method}_results_glue-stsb_v{version}.csv`
+for row_id in range(len(all_data)):
+    if all_data.at[row_id, "dataset"] == "glue-stsb":
+        method = all_data.at[row_id, "method"]
+        version = all_data.at[row_id, "version"]
+        data = pd.read_csv(f"{method}_results_glue-stsb_v{version}.csv")
+        assert len(data) == 1
+        all_data.at[row_id, "accuracy"] = data.at[0, "accuracy"]
+
+
+# %%
 data = all_data
 # drop column `Unnamed: 0`
 data = data.drop(columns=["Unnamed: 0"])
-
+# drop duplicate rows
+data = data.drop_duplicates()
 # %%
 # process data
 for row_id in range(len(data)):
     config = DictConfig(eval(data.at[row_id, "config"]))
     if config.peft.peft_config is not None:
-        data.at[row_id, "RoLA.r"] = config.peft.peft_config.r
+        data.at[row_id, "LoRA.r"] = config.peft.peft_config.r
     else:
-        data.at[row_id, "RoLA.r"] = math.nan
+        data.at[row_id, "LoRA.r"] = math.nan
     data.at[row_id, "batch_size"] = config.batch_size
     data.at[row_id, "steps"] = config.trainer.max_steps
     data.at[row_id, "lr"] = config.optim.optimizer.lr
