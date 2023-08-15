@@ -71,13 +71,13 @@ def load_pretrained_model(
 
 
 def load_finetuned_model(
-    model: str,
-    dataset: str,
+    model_name: str,
+    dataset_name: str,
     finetune_mode: str,
     version: int,
 ):
     log_dir: Path = (
-        Path("logs") / model / dataset / finetune_mode / f"version_{version}"
+        Path("logs") / model_name / dataset_name / finetune_mode / f"version_{version}"
     )
     config_path = log_dir / "config.yaml"
     cfg: DictConfig = OmegaConf.load(config_path)
@@ -254,13 +254,11 @@ def evaluate_spearman_rho(model, val_loader: DataLoader, tokenizer):
 
     # save `all_preds` and `all_labels`
     with open("temp/all_preds.txt", "w") as f:
-        for preds in all_preds:
-            for pred in preds:
-                f.write(pred + "\n")
+        for pred in all_preds:
+            f.write(pred + "\n")
     with open("temp/all_labels.txt", "w") as f:
-        for labels in all_labels:
-            for label in labels:
-                f.write(label + "\n")
+        for label in all_labels:
+            f.write(label + "\n")
 
     # calculate spearman's rho
     # 1. convert string list `all_preds` and `all_labels` to numpy array
@@ -520,7 +518,11 @@ def get_task_vector(
 
 
 def evaluate_fft_task_addition():
-    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+    for num_tasks in reversed(range(0, len(DATASET_NAMES) + 1)):
+        if os.path.exists(
+            f"results/{MODEL_NAME}/fft_task_addition_num-tasks={num_tasks}.csv"
+        ):  # skip if already exists
+            continue
         finetune_mode = "standard"
         results = defaultdict(lambda: list())
         for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
@@ -553,9 +555,14 @@ def evaluate_fft_task_addition():
             index=False,
         )
 
+
 def evaluate_lora_task_addition():
-    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+    for num_tasks in reversed(range(0, len(DATASET_NAMES) + 1)):
         finetune_mode = "lora"
+        if os.path.exists(
+            f"results/{MODEL_NAME}/{finetune_mode}_task_addition_num-tasks={num_tasks}.csv",
+        ):  # skip if already exists
+            continue
         results = defaultdict(lambda: list())
         for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
             task_vector = get_task_vector(lora_task_vector, dataset_names)
@@ -587,9 +594,14 @@ def evaluate_lora_task_addition():
             index=False,
         )
 
+
 def evaluate_l_lora_task_addition():
-    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+    for num_tasks in reversed(range(0, len(DATASET_NAMES) + 1)):
         finetune_mode = "l_lora"
+        if os.path.exists(
+            f"results/{MODEL_NAME}/{finetune_mode}_task_addition_num-tasks={num_tasks}.csv",
+        ):  # skip if already exists
+            continue
         results = defaultdict(lambda: list())
         for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
             task_vector = get_task_vector(l_lora_task_vector, dataset_names)
@@ -620,9 +632,11 @@ def evaluate_l_lora_task_addition():
             f"results/{MODEL_NAME}/{finetune_mode}_task_addition_num-tasks={num_tasks}.csv",
             index=False,
         )
+
+
 # %%
 
-if __name__ == '__main__':
-    # evaluate_fft_task_addition()
+if __name__ == "__main__":
+    evaluate_fft_task_addition()
     # evaluate_lora_task_addition()
-    evaluate_l_lora_task_addition()
+    # evaluate_l_lora_task_addition()
