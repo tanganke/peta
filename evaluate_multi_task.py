@@ -135,7 +135,7 @@ def evaluate_accuracy(model, val_loader: DataLoader, tokenizer):
     total = 0
 
     model = model.eval()
-    for batch_idx, batch in enumerate(tqdm(val_loader)):
+    for batch_idx, batch in zip(range(50), tqdm(val_loader)):
         with torch.no_grad():
             outputs = model.generate(batch["input_ids"])
             output_text = tokenizer.batch_decode(outputs, skip_special_tokens=True)
@@ -199,7 +199,7 @@ def load_pretrained_model_and_dataset(
     return model, tokenizer, val_loader
 
 
-def load_validation_dataloaer(cfg: DictConfig, tokenizer, batch_size=32):
+def load_validation_dataloader(cfg: DictConfig, tokenizer, batch_size=32):
     datasets = instantiate(cfg.dataset.datasets)
 
     if "validation" in datasets:
@@ -228,7 +228,7 @@ def load_validation_dataloaer(cfg: DictConfig, tokenizer, batch_size=32):
         val_dataset,
         batch_size=batch_size,
         num_workers=0,
-        shuffle=False,
+        shuffle=True,  #! for efficiency, we shuffle the validation dataset, and validate on the first 50 batches.
         collate_fn=default_data_collator,
     )
 
@@ -241,7 +241,7 @@ def evaluate_spearman_rho(model, val_loader: DataLoader, tokenizer):
     model = model.eval()
     all_preds: List[str] = []
     all_labels: List[str] = []
-    for batch_idx, batch in enumerate(tqdm(val_loader)):
+    for batch_idx, batch in zip(range(50), tqdm(val_loader)):
         with torch.no_grad():
             outputs = model.generate(batch["input_ids"])
             output_text = tokenizer.batch_decode(outputs, skip_special_tokens=True)
@@ -518,7 +518,8 @@ def get_task_vector(
 
 
 def evaluate_fft_task_addition():
-    for num_tasks in reversed(range(0, len(DATASET_NAMES) + 1)):
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
         if os.path.exists(
             f"results/{MODEL_NAME}/fft_task_addition_num-tasks={num_tasks}.csv"
         ):  # skip if already exists
@@ -528,6 +529,9 @@ def evaluate_fft_task_addition():
         for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
             task_vector = get_task_vector(fft_task_vector, dataset_names)
             for scaling_factor in np.linspace(0, 1, 21):
+                log.info(
+                    f"scaling_factor: {scaling_factor}, num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}"
+                )
                 results["scaling_factor"].append(scaling_factor)
                 model: nn.Module = deepcopy(fft_pretrained_model)
                 model.load_state_dict(
@@ -543,6 +547,7 @@ def evaluate_fft_task_addition():
                 for dataset_idx, dataset_name in enumerate(dataset_names):
                     results[f"dataset:{dataset_idx}"].append(dataset_name)
                 for dataset_name in DATASET_NAMES:
+                    log.info(f"evaluating on dataset: {dataset_name}")
                     score = metric_func[dataset_name](
                         model, val_loaders[dataset_name], tokenizer
                     )
@@ -557,7 +562,8 @@ def evaluate_fft_task_addition():
 
 
 def evaluate_lora_task_addition():
-    for num_tasks in reversed(range(0, len(DATASET_NAMES) + 1)):
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
         finetune_mode = "lora"
         if os.path.exists(
             f"results/{MODEL_NAME}/{finetune_mode}_task_addition_num-tasks={num_tasks}.csv",
@@ -567,6 +573,9 @@ def evaluate_lora_task_addition():
         for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
             task_vector = get_task_vector(lora_task_vector, dataset_names)
             for scaling_factor in np.linspace(0, 1, 21):
+                log.info(
+                    f"scaling_factor: {scaling_factor}, num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}"
+                )
                 results["scaling_factor"].append(scaling_factor)
                 model: nn.Module = deepcopy(lora_pretrained_model)
                 model.load_state_dict(
@@ -582,6 +591,7 @@ def evaluate_lora_task_addition():
                 for dataset_idx, dataset_name in enumerate(dataset_names):
                     results[f"dataset:{dataset_idx}"].append(dataset_name)
                 for dataset_name in DATASET_NAMES:
+                    log.info(f"evaluating on dataset: {dataset_name}")
                     score = metric_func[dataset_name](
                         model, val_loaders[dataset_name], tokenizer
                     )
@@ -596,7 +606,8 @@ def evaluate_lora_task_addition():
 
 
 def evaluate_l_lora_task_addition():
-    for num_tasks in reversed(range(0, len(DATASET_NAMES) + 1)):
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
         finetune_mode = "l_lora"
         if os.path.exists(
             f"results/{MODEL_NAME}/{finetune_mode}_task_addition_num-tasks={num_tasks}.csv",
@@ -606,6 +617,9 @@ def evaluate_l_lora_task_addition():
         for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
             task_vector = get_task_vector(l_lora_task_vector, dataset_names)
             for scaling_factor in np.linspace(0, 1, 21):
+                log.info(
+                    f"scaling_factor: {scaling_factor}, num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}"
+                )
                 results["scaling_factor"].append(scaling_factor)
                 model: nn.Module = deepcopy(l_lora_pretrained_model)
                 model.load_state_dict(
@@ -621,6 +635,7 @@ def evaluate_l_lora_task_addition():
                 for dataset_idx, dataset_name in enumerate(dataset_names):
                     results[f"dataset:{dataset_idx}"].append(dataset_name)
                 for dataset_name in DATASET_NAMES:
+                    log.info(f"evaluating on dataset: {dataset_name}")
                     score = metric_func[dataset_name](
                         model, val_loaders[dataset_name], tokenizer
                     )
@@ -638,5 +653,5 @@ def evaluate_l_lora_task_addition():
 
 if __name__ == "__main__":
     evaluate_fft_task_addition()
-    # evaluate_lora_task_addition()
-    # evaluate_l_lora_task_addition()
+    evaluate_lora_task_addition()
+    evaluate_l_lora_task_addition()
