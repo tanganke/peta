@@ -1,6 +1,6 @@
 defaults:
   - model: flan-t5-base
-  - peft: lora-16
+  - peft: nopeft
   - dataset: glue-cola
   - optim: adam
   - _self_
@@ -16,7 +16,7 @@ trainer:
   accelerator: gpu
   devices: 4
   max_epochs: null
-  max_steps: 2000
+  max_steps: 100
   accumulate_grad_batches: 1
   profiler: simple
   enable_checkpointing: false # manually save checkpoints

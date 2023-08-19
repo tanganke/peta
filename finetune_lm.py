@@ -190,12 +190,9 @@ def main(cfg: DictConfig):
 
         # create dataloaders
         assert (
-            cfg.batch_size % num_devices(OmegaConf.to_container(cfg.trainer.devices))
-            == 0
+            cfg.batch_size % num_devices(cfg.trainer.devices) == 0
         ), "batch_size must be divisible by the number of devices."
-        batch_size = cfg.batch_size // num_devices(
-            OmegaConf.to_container(cfg.trainer.devices)
-        )
+        batch_size = cfg.batch_size // num_devices(cfg.trainer.devices)
         train_loader = DataLoader(
             datasets["train"],
             batch_size=batch_size,
