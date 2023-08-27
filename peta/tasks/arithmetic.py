@@ -3,6 +3,28 @@ from typing import Dict
 from torch import Tensor, nn
 from typing import List
 
+def state_dict_avg(state_dicts: List[Dict[str, Tensor]]):
+    """
+    Returns the average of a list of state dicts.
+
+    Args:
+        state_dicts (List[Dict[str, Tensor]]): The list of state dicts to average.
+
+    Returns:
+        Dict: The average of the state dicts.
+    """
+    assert len(state_dicts) > 0, "The number of state_dicts must be greater than 0"
+    assert all(
+        [len(state_dicts[0]) == len(state_dict) for state_dict in state_dicts]
+    ), "All state_dicts must have the same number of keys"
+
+    avg_state_dict = {}
+    for key in state_dicts[0]:
+        avg_state_dict[key] = torch.zeros_like(state_dicts[0][key])
+        for state_dict in state_dicts:
+            avg_state_dict[key] += state_dict[key]
+        avg_state_dict[key] /= len(state_dicts)
+    return avg_state_dict
 
 def state_dict_sub(a: Dict, b: Dict, strict: bool = True):
     """

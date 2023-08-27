@@ -649,9 +649,144 @@ def evaluate_l_lora_task_addition():
         )
 
 
+def evaluate_fft_average():
+    """
+    evaluate simple average method on full-finetuned models.
+    """
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
+        
+        # setup result path and check if result file already exists
+        # if result file already exists, skip
+        result_path = f"results/{MODEL_NAME}/fft_average_num-tasks={num_tasks}.csv"
+        if os.path.exists(result_path):
+            log.info(f"skip {result_path}")
+            continue
+        
+        finetune_mode = "standard"
+        results = defaultdict(lambda: list())
+        for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            log.info(
+                f"num_tasks: {num_tasks}, dataset_names: {dataset_names}, finetune_mode: {finetune_mode}"
+            )
+
+            # compute average task vector, and add it to the pretrained model
+            avg_task_vector = state_dict_avg(
+                [fft_task_vector[d] for d in dataset_names]
+            )
+            model: nn.Module = deepcopy(fft_pretrained_model)
+            avg_task_vector = state_dict_add(
+                avg_task_vector, model.state_dict(), strict=False
+            )
+            model.load_state_dict(avg_task_vector)
+
+            model = fabric.setup_module(model)
+            for dataset_idx, dataset_name in enumerate(dataset_names):
+                results[f"dataset:{dataset_idx}"].append(dataset_name)
+            for dataset_name in DATASET_NAMES:
+                log.info(f"evaluating on dataset: {dataset_name}")
+                score = metric_func[dataset_name](
+                    model, val_loaders[dataset_name], tokenizer
+                )
+                results[dataset_name].append(score)
+            print(pd.DataFrame(results))
+        
+        results = pd.DataFrame(results)
+        results.to_csv(result_path, index=False)
+
+def evaluate_lora_avg():
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
+        
+        # setup result path and check if result file already exists
+        # if result file already exists, skip
+        result_path = f"results/{MODEL_NAME}/lora_average_num-tasks={num_tasks}.csv"
+        if os.path.exists(result_path):
+            log.info(f"skip {result_path}")
+            continue
+        
+        finetune_mode = "lora"
+        results = defaultdict(lambda: list())
+        for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            log.info(
+                f"num_tasks: {num_tasks}, dataset_names: {dataset_names}, finetune_mode: {finetune_mode}"
+            )
+
+            avg_task_vector = state_dict_avg(
+                [lora_task_vector[d] for d in dataset_names]
+            )
+            model: nn.Module = deepcopy(lora_pretrained_model)
+            avg_task_vector = state_dict_add(
+                avg_task_vector, model.state_dict(), strict=False
+            )
+            model.load_state_dict(avg_task_vector)
+
+            model = fabric.setup_module(model)
+            for dataset_idx, dataset_name in enumerate(dataset_names):
+                results[f"dataset:{dataset_idx}"].append(dataset_name)
+            for dataset_name in DATASET_NAMES:
+                log.info(f"evaluating on dataset: {dataset_name}")
+                score = metric_func[dataset_name](
+                    model, val_loaders[dataset_name], tokenizer
+                )
+                results[dataset_name].append(score)
+            print(pd.DataFrame(results))
+        
+        results = pd.DataFrame(results)
+        results.to_csv(result_path, index=False)
+
+
+def evaluate_l_lora_avg():
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
+        
+        # setup result path and check if result file already exists
+        # if result file already exists, skip
+        result_path = f"results/{MODEL_NAME}/l_lora_average_num-tasks={num_tasks}.csv"
+        if os.path.exists(result_path):
+            log.info(f"skip {result_path}")
+            continue
+        
+        finetune_mode = "l_lora"
+        results = defaultdict(lambda: list())
+        for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            log.info(
+                f"num_tasks: {num_tasks}, dataset_names: {dataset_names}, finetune_mode: {finetune_mode}"
+            )
+
+            # compute average task vector, and add it to the pretrained model
+            avg_task_vector = state_dict_avg(
+                [l_lora_task_vector[d] for d in dataset_names]
+            )
+            model: nn.Module = deepcopy(l_lora_pretrained_model)
+            avg_task_vector = state_dict_add(
+                avg_task_vector, model.state_dict(), strict=False
+            )
+            model.load_state_dict(avg_task_vector)
+
+            model = fabric.setup_module(model)
+            for dataset_idx, dataset_name in enumerate(dataset_names):
+                results[f"dataset:{dataset_idx}"].append(dataset_name)
+            for dataset_name in DATASET_NAMES:
+                log.info(f"evaluating on dataset: {dataset_name}")
+                score = metric_func[dataset_name](
+                    model, val_loaders[dataset_name], tokenizer
+                )
+                results[dataset_name].append(score)
+            print(pd.DataFrame(results))
+        
+        results = pd.DataFrame(results)
+        results.to_csv(result_path, index=False)
+
 # %%
 
-if __name__ == "__main__":
-    evaluate_fft_task_addition()
-    evaluate_lora_task_addition()
-    evaluate_l_lora_task_addition()
+if __name__ == "__main__":    
+    # baseline: simple average
+    evaluate_fft_average()
+    evaluate_lora_avg()
+    evaluate_l_lora_avg()
+
+    # task arithmetic
+    # evaluate_fft_task_addition()
+    # evaluate_lora_task_addition()
+    # evaluate_l_lora_task_addition()
