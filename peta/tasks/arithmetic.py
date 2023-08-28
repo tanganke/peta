@@ -3,6 +3,23 @@ from typing import Dict
 from torch import Tensor, nn
 from typing import List
 
+
+def state_dict_flatten(state_dict: Dict[str, Tensor]):
+    """
+    Flattens a state dict.
+
+    Args:
+        state_dict (Dict[str, Tensor]): The state dict to be flattened.
+
+    Returns:
+        Tensor: The flattened state dict.
+    """
+    flattened_state_dict = []
+    for key in state_dict:
+        flattened_state_dict.append(state_dict[key].flatten())
+    return torch.cat(flattened_state_dict)
+
+
 def state_dict_avg(state_dicts: List[Dict[str, Tensor]]):
     """
     Returns the average of a list of state dicts.
@@ -25,6 +42,7 @@ def state_dict_avg(state_dicts: List[Dict[str, Tensor]]):
             avg_state_dict[key] += state_dict[key]
         avg_state_dict[key] /= len(state_dicts)
     return avg_state_dict
+
 
 def state_dict_sub(a: Dict, b: Dict, strict: bool = True):
     """

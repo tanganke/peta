@@ -351,23 +351,24 @@ def version_of_max_accuracy(
 
 
 # %%
+@torch.no_grad()
 def load_task_vectors(model_name: str, dataset_names: list) -> tuple:
     """
     Load task vectors for a given model and dataset.
 
     Args:
-    - model_name (str): The name of the model to load task vectors for.
-    - dataset_names (list): A list of dataset names to load task vectors for.
+        model_name (str): The name of the model to load task vectors for.
+        dataset_names (list): A list of dataset names to load task vectors for.
 
     Returns:
-    - fft_pretrained_model (AutoModelForSeq2SeqLM): The pretrained FFT model.
-    - lora_pretrained_model (AutoModelForSeq2SeqLM): The pretrained LORA model.
-    - l_lora_pretrained_model (AutoModelForSeq2SeqLM): The pretrained L-LORA model.
-    - fft_task_vector (dict): A dictionary containing the FFT task vectors for each dataset.
-    - lora_task_vector (dict): A dictionary containing the LORA task vectors for each dataset.
-    - l_lora_task_vector (dict): A dictionary containing the L-LORA task vectors for each dataset.
-    - val_loaders (dict): A dictionary containing the validation data loaders for each dataset.
-    - tokenizer (AutoTokenizer): The tokenizer used for the model.
+        fft_pretrained_model (AutoModelForSeq2SeqLM): The pretrained FFT model.
+        lora_pretrained_model (AutoModelForSeq2SeqLM): The pretrained LORA model.
+        l_lora_pretrained_model (AutoModelForSeq2SeqLM): The pretrained L-LORA model.
+        fft_task_vector (dict): A dictionary containing the FFT task vectors for each dataset.
+        lora_task_vector (dict): A dictionary containing the LORA task vectors for each dataset.
+        l_lora_task_vector (dict): A dictionary containing the L-LORA task vectors for each dataset.
+        val_loaders (dict): A dictionary containing the validation data loaders for each dataset.
+        tokenizer (AutoTokenizer): The tokenizer used for the model.
     """
     fft_state_dict: Dict[str, Dict[str, Tensor]] = {}
     lora_state_dict: Dict[str, Dict[str, Tensor]] = {}
@@ -737,11 +738,248 @@ def evaluate_lora_avg():
         results.to_csv(result_path, index=False)
 
 
+def evaluate_l_lora_avg():
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
+
+        # setup result path and check if result file already exists
+        # if result file already exists, skip
+        result_path = f"results/{MODEL_NAME}/l_lora_average_num-tasks={num_tasks}.csv"
+        if os.path.exists(result_path):
+            log.info(f"skip {result_path}")
+            continue
+
+        finetune_mode = "l_lora"
+        results = defaultdict(lambda: list())
+        for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            log.info(
+                f"num_tasks: {num_tasks}, dataset_names: {dataset_names}, finetune_mode: {finetune_mode}"
+            )
+
+            # compute average task vector, and add it to the pretrained model
+            avg_task_vector = state_dict_avg(
+                [l_lora_task_vector[d] for d in dataset_names]
+            )
+            model: nn.Module = deepcopy(l_lora_pretrained_model)
+            avg_task_vector = state_dict_add(
+                avg_task_vector, model.state_dict(), strict=False
+            )
+            model.load_state_dict(avg_task_vector, strict=False)
+
+            model = fabric.setup_module(model)
+            for dataset_idx, dataset_name in enumerate(dataset_names):
+                results[f"dataset:{dataset_idx}"].append(dataset_name)
+            for dataset_name in DATASET_NAMES:
+                log.info(f"evaluating on dataset: {dataset_name}")
+                score = metric_func[dataset_name](
+                    model, val_loaders[dataset_name], tokenizer
+                )
+                results[dataset_name].append(score)
+            print(pd.DataFrame(results))
+
+        results = pd.DataFrame(results)
+        results.to_csv(result_path, index=False)
+
+
+def _check_keys(state_dicts: List[Dict[str, Any]]):
+    """check the keys of `state_dict` are equal.
+
+    Args:
+        state_dicts (List[Dict[str, Any]]): _description_
+    """
+    keys = set(state_dicts[0].keys())
+    for state_dict in state_dicts:
+        assert keys == set(state_dict.keys()), "keys of state_dicts are not equal"
+
+
+def ties_merging(state_dicts: List[Dict[str, Tensor]], k: float):
+    """
+    Merges the state dictionaries of multiple PyTorch models using the TIES algorithm.
+
+    Args:
+        state_dicts (List[Dict[str, Tensor]]): A list of dictionaries containing the state of PyTorch models.
+        k (float): The threshold for resetting the task checks. Should be a float between 0 and 1.
+
+    Returns:
+        Dict[str, Tensor]: A dictionary containing the merged state of the PyTorch models.
+    """
+    # Import the ties_merging module and check that the state dictionaries have the same keys
+    import peta.tasks.ties_merging as tm
+
+    _check_keys(state_dicts)
+
+    # Convert the state dictionaries to vectors and merge them using the Ties-Merging algorithm
+    task_vectors = torch.stack(tuple(map(tm.state_dict_to_vector, state_dicts)), dim=0)
+    merged_task_vector = tm.ties_merging(task_vectors, k, merge_func="mean")
+
+    # Convert the merged vector back to a state dictionary
+    reference_state_dict = deepcopy(state_dicts[0])
+    merged_state_dict = tm.vector_to_state_dict(merged_task_vector, reference_state_dict)
+
+    return merged_state_dict
+
+
+def evaluate_fft_ties_merging():
+    finetune_mode = "standard"
+    task_vector_dict = fft_task_vector
+    result_path_template = (
+        "results/{MODEL_NAME}/fft_ties_merging_num-tasks={num_tasks}.csv"
+    )
+    # --------------------------------------------------------------------------------------
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
+        result_path = result_path_template.format(
+            MODEL_NAME=MODEL_NAME, num_tasks=num_tasks
+        )
+        if os.path.exists(result_path):  # skip if already exists
+            continue
+        results = defaultdict(lambda: list())
+        for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            for k in [0.25, 0.5, 0.75, 1]:
+                # the top-k% parameters are keeped
+                task_vector = ties_merging(
+                    [task_vector_dict[d] for d in dataset_names], k
+                )
+                for scaling_factor in np.linspace(0, 1, 11):
+                    log.info(
+                        f"scaling_factor: {scaling_factor}, num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}, k: {k}"
+                    )
+                    results["scaling_factor"].append(scaling_factor)
+                    results["k"].append(k)
+                    model: nn.Module = deepcopy(fft_pretrained_model)
+                    model.load_state_dict(
+                        # \tau * \lambda + \theta_0
+                        state_dict_add(
+                            model.state_dict(),
+                            state_dict_mul(task_vector, scaling_factor),
+                            strict=False,
+                        ),
+                        strict=False,
+                    )
+                    model = fabric.setup_module(model)
+                    for dataset_idx, dataset_name in enumerate(dataset_names):
+                        results[f"dataset:{dataset_idx}"].append(dataset_name)
+                    for dataset_name in DATASET_NAMES:
+                        log.info(f"evaluating on dataset: {dataset_name}")
+                        score = metric_func[dataset_name](
+                            model, val_loaders[dataset_name], tokenizer
+                        )
+                        results[dataset_name].append(score)
+                    print(pd.DataFrame(results))
+
+        results = pd.DataFrame(results)
+        results.to_csv(result_path, index=False)
+
+
+def evaluate_lora_ties_merging():
+    finetune_mode = "lora"
+    task_vector_dict = lora_task_vector
+    result_path_template = (
+        "results/{MODEL_NAME}/lora_ties_merging_num-tasks={num_tasks}.csv"
+    )
+    # --------------------------------------------------------------------------------------
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
+        result_path = result_path_template.format(
+            MODEL_NAME=MODEL_NAME, num_tasks=num_tasks
+        )
+        if os.path.exists(result_path):  # skip if already exists
+            continue
+        results = defaultdict(lambda: list())
+        for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            for k in [0.25, 0.5, 0.75, 1]:
+                # the top-k% parameters are keeped
+                task_vector = ties_merging(
+                    [task_vector_dict[d] for d in dataset_names], k
+                )
+                for scaling_factor in np.linspace(0, 1, 11):
+                    log.info(
+                        f"scaling_factor: {scaling_factor}, num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}, k: {k}"
+                    )
+                    results["scaling_factor"].append(scaling_factor)
+                    results["k"].append(k)
+                    model: nn.Module = deepcopy(fft_pretrained_model)
+                    model.load_state_dict(
+                        # \tau * \lambda + \theta_0
+                        state_dict_add(
+                            model.state_dict(),
+                            state_dict_mul(task_vector, scaling_factor),
+                            strict=False,
+                        ),
+                        strict=False,
+                    )
+                    model = fabric.setup_module(model)
+                    for dataset_idx, dataset_name in enumerate(dataset_names):
+                        results[f"dataset:{dataset_idx}"].append(dataset_name)
+                    for dataset_name in DATASET_NAMES:
+                        log.info(f"evaluating on dataset: {dataset_name}")
+                        score = metric_func[dataset_name](
+                            model, val_loaders[dataset_name], tokenizer
+                        )
+                        results[dataset_name].append(score)
+                    print(pd.DataFrame(results))
+
+        results = pd.DataFrame(results)
+        results.to_csv(result_path, index=False)
+
+
+def evaluate_l_lora_ties_merging():
+    finetune_mode = "l_lora"
+    task_vector_dict = l_lora_task_vector
+    result_path_template = (
+        "results/{MODEL_NAME}/l_lora_ties_merging_num-tasks={num_tasks}.csv"
+    )
+    # --------------------------------------------------------------------------------------
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
+        result_path = result_path_template.format(
+            MODEL_NAME=MODEL_NAME, num_tasks=num_tasks
+        )
+        if os.path.exists(result_path):  # skip if already exists
+            continue
+        results = defaultdict(lambda: list())
+        for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            for k in [0.25, 0.5, 0.75, 1]:
+                # the top-k% parameters are keeped
+                task_vector = ties_merging(
+                    [task_vector_dict[d] for d in dataset_names], k
+                )
+                for scaling_factor in np.linspace(0, 1, 11):
+                    log.info(
+                        f"scaling_factor: {scaling_factor}, num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}, k: {k}"
+                    )
+                    results["scaling_factor"].append(scaling_factor)
+                    results["k"].append(k)
+                    model: nn.Module = deepcopy(fft_pretrained_model)
+                    model.load_state_dict(
+                        # \tau * \lambda + \theta_0
+                        state_dict_add(
+                            model.state_dict(),
+                            state_dict_mul(task_vector, scaling_factor),
+                            strict=False,
+                        ),
+                        strict=False,
+                    )
+                    model = fabric.setup_module(model)
+                    for dataset_idx, dataset_name in enumerate(dataset_names):
+                        results[f"dataset:{dataset_idx}"].append(dataset_name)
+                    for dataset_name in DATASET_NAMES:
+                        log.info(f"evaluating on dataset: {dataset_name}")
+                        score = metric_func[dataset_name](
+                            model, val_loaders[dataset_name], tokenizer
+                        )
+                        results[dataset_name].append(score)
+                    print(pd.DataFrame(results))
+
+        results = pd.DataFrame(results)
+        results.to_csv(result_path, index=False)
+
+
 # %%
 
 if __name__ == "__main__":
     # baseline: simple average
-    evaluate_fft_average()
+    # evaluate_fft_average()
     # evaluate_lora_avg()
     # evaluate_l_lora_avg()
 
@@ -749,3 +987,8 @@ if __name__ == "__main__":
     # evaluate_fft_task_addition()
     # evaluate_lora_task_addition()
     # evaluate_l_lora_task_addition()
+
+    # ties merging
+    evaluate_fft_ties_merging()
+    evaluate_lora_ties_merging()
+    evaluate_l_lora_ties_merging()
