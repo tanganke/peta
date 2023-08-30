@@ -84,6 +84,8 @@ def topk_values_mask(M: torch.Tensor, K: float = 0.7, return_mask: bool = False)
     _, d = M.shape
     k = int(d * K)
     k = d - k  # Keep top k elements instead of bottom k elements
+    if k <=0:
+        k = 1
 
     # Find the k-th smallest element by magnitude for each row
     # kthvalue: https://pytorch.org/docs/stable/generated/torch.kthvalue.html
