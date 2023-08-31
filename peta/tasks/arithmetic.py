@@ -105,6 +105,23 @@ def state_dict_mul(state_dict: Dict, scalar: float):
     return diff
 
 
+def state_dict_power(state_dict: Dict[str, Tensor], p: float):
+    """
+    Returns the power of a state dict.
+
+    Args:
+        state_dict (Dict[str, Tensor]): The state dict to be powered.
+        p (float): The power to raise the state dict to.
+
+    Returns:
+        Dict[str, Tensor]: The powered state dict.
+    """
+    powered_state_dict = {}
+    for key in state_dict:
+        powered_state_dict[key] = state_dict[key] ** p
+    return powered_state_dict
+
+
 def state_dict_interpolation(
     state_dicts: List[Dict[str, Tensor]], scalars: List[float]
 ):

@@ -1,0 +1,2 @@
+scaling_factor,dataset:0,dataset:1,dataset:2,dataset:3,dataset:4,dataset:5,dataset:6,glue-cola,glue-mnli,glue-mrpc,glue-qqp,glue-rte,glue-sst2,glue-stsb,mean
+0.3,glue-cola,glue-mnli,glue-mrpc,glue-qqp,glue-rte,glue-sst2,glue-stsb,0.008917197452229226,0.30362220299171705,0.22857142857142854,0.2589710972398899,0.7838983050847458,0.24324324324324323,0.0,0.26103192494046484
