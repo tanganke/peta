@@ -1,0 +1,8 @@
+scaling_factor,dataset:0,dataset:1,dataset:2,dataset:3,dataset:4,dataset:5,glue-cola,glue-mnli,glue-mrpc,glue-qqp,glue-rte,glue-sst2,glue-stsb,mean
+0.25,glue-cola,glue-mnli,glue-mrpc,glue-qqp,glue-rte,glue-sst2,0.2205177372962607,0.02875,0.0,0.0,0.0144404332129963,0.5481651376146789,,0.11598190116056227
+0.35,glue-cola,glue-mnli,glue-mrpc,glue-qqp,glue-rte,glue-stsb,0.0,0.05,0.0,0.0,0.447653429602888,0.0,,0.07109334708612686
+0.25,glue-cola,glue-mnli,glue-mrpc,glue-qqp,glue-sst2,glue-stsb,0.2435282837967401,0.044375,0.0,0.0,0.0,0.805045871559633,,0.156135593622339
+0.3,glue-cola,glue-mnli,glue-mrpc,glue-rte,glue-sst2,glue-stsb,0.2770853307766059,0.38375,0.0,0.0,0.4657039711191336,0.1938073394495413,,0.18862094876361152
+0.3,glue-cola,glue-mnli,glue-qqp,glue-rte,glue-sst2,glue-stsb,0.1476510067114094,0.42125,0.0,0.0,0.5018050541516246,0.6364678899082569,,0.2438819929673273
+0.2,glue-cola,glue-mrpc,glue-qqp,glue-rte,glue-sst2,glue-stsb,0.0335570469798657,0.0,0.0,0.0,0.0,0.3956422018348624,,0.061314178402104014
+0.25,glue-mnli,glue-mrpc,glue-qqp,glue-rte,glue-sst2,glue-stsb,0.0,0.036875,0.0,0.0,0.3176895306859206,0.5275229357798165,,0.126012495209391
