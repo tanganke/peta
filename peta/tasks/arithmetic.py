@@ -4,6 +4,23 @@ from torch import Tensor, nn
 from typing import List
 
 
+def state_dicts_check_keys(state_dicts: List[Dict[str, Tensor]]):
+    """
+    Checks that the state dictionaries have the same keys.
+
+    Args:
+        state_dicts (List[Dict[str, Tensor]]): A list of dictionaries containing the state of PyTorch models.
+
+    Raises:
+        ValueError: If the state dictionaries have different keys.
+    """
+    # Get the keys of the first state dictionary in the list
+    keys = set(state_dicts[0].keys())
+    # Check that all the state dictionaries have the same keys
+    for state_dict in state_dicts:
+        assert keys == set(state_dict.keys()), "keys of state_dicts are not equal"
+
+
 def num_params_of_state_dict(state_dict: Dict[str, Tensor]):
     """
     Returns the number of parameters in a state dict.
