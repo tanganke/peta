@@ -606,6 +606,161 @@ def evaluate_lora_task_addition():
         )
 
 
+def get_task_vector_p(
+    task_vectors: Dict[str, Dict[str, Tensor]], dataset_names: List[str], p: float = 3
+) -> str:
+    R"""
+    Computes the task vector for the given dataset names.
+        \tau_1 + \tau_2 + \tau_3 ... + \tau_n
+
+    Args:
+        task_vector (Dict[str, Dict[str, Tensor]]): A dictionary containing task vectors for each dataset.
+        dataset_names (List[str]): A list of dataset names for which to compute the task vector.
+    """
+    assert p != 0, "p must be != 0"
+    task_vector = None
+    for dataset_name in dataset_names:
+        if task_vector is None:
+            task_vector = state_dict_power(task_vectors[dataset_name], p)
+        else:
+            task_vector = state_dict_add(
+                task_vector, state_dict_power(task_vectors[dataset_name], p)
+            )
+    return state_dict_power(task_vector, 1 / p)
+
+
+def evaluate_l_lora_task_addition_p():
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
+        finetune_mode = "l_lora"
+        if os.path.exists(
+            f"results/{MODEL_NAME}/{finetune_mode}_task_addition_num-tasks={num_tasks}.csv",
+        ):  # skip if already exists
+            continue
+        results = defaultdict(lambda: list())
+        for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            task_vector = get_task_vector_p(l_lora_task_vector, dataset_names)
+            for scaling_factor in np.linspace(0, 1, 11):
+                log.info(
+                    f"scaling_factor: {scaling_factor}, num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}"
+                )
+                results["scaling_factor"].append(scaling_factor)
+                model: nn.Module = deepcopy(l_lora_pretrained_model)
+                model.load_state_dict(
+                    # \tau * \lambda + \theta_0
+                    state_dict_add(
+                        model.state_dict(),
+                        state_dict_mul(task_vector, scaling_factor),
+                        strict=False,
+                    ),
+                    strict=False,
+                )
+                model = fabric.setup_module(model)
+                for dataset_idx, dataset_name in enumerate(dataset_names):
+                    results[f"dataset:{dataset_idx}"].append(dataset_name)
+                for dataset_name in DATASET_NAMES:
+                    log.info(f"evaluating on dataset: {dataset_name}")
+                    score = metric_func[dataset_name](
+                        model, val_loaders[dataset_name], tokenizer
+                    )
+                    results[dataset_name].append(score)
+                print(pd.DataFrame(results))
+
+        results = pd.DataFrame(results)
+        results.to_csv(
+            f"results/{MODEL_NAME}/{finetune_mode}_task_addition_num-tasks={num_tasks}.csv",
+            index=False,
+        )
+
+
+def evaluate_fft_task_addition_p():
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
+        if os.path.exists(
+            f"results/{MODEL_NAME}/fft_task_addition_num-tasks={num_tasks}.csv"
+        ):  # skip if already exists
+            continue
+        finetune_mode = "standard"
+        results = defaultdict(lambda: list())
+        for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            task_vector = get_task_vector_p(fft_task_vector, dataset_names)
+            for scaling_factor in np.linspace(0, 1, 11):
+                log.info(
+                    f"scaling_factor: {scaling_factor}, num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}"
+                )
+                results["scaling_factor"].append(scaling_factor)
+                model: nn.Module = deepcopy(fft_pretrained_model)
+                model.load_state_dict(
+                    # \tau * \lambda + \theta_0
+                    state_dict_add(
+                        model.state_dict(),
+                        state_dict_mul(task_vector, scaling_factor),
+                        strict=False,
+                    ),
+                    strict=False,
+                )
+                model = fabric.setup_module(model)
+                for dataset_idx, dataset_name in enumerate(dataset_names):
+                    results[f"dataset:{dataset_idx}"].append(dataset_name)
+                for dataset_name in DATASET_NAMES:
+                    log.info(f"evaluating on dataset: {dataset_name}")
+                    score = metric_func[dataset_name](
+                        model, val_loaders[dataset_name], tokenizer
+                    )
+                    results[dataset_name].append(score)
+                print(pd.DataFrame(results))
+
+        results = pd.DataFrame(results)
+        results.to_csv(
+            f"results/{MODEL_NAME}/fft_task_addition_num-tasks={num_tasks}.csv",
+            index=False,
+        )
+
+
+def evaluate_lora_task_addition_p():
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
+        finetune_mode = "lora"
+        if os.path.exists(
+            f"results/{MODEL_NAME}/{finetune_mode}_task_addition_num-tasks={num_tasks}.csv",
+        ):  # skip if already exists
+            continue
+        results = defaultdict(lambda: list())
+        for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            task_vector = get_task_vector_p(lora_task_vector, dataset_names)
+            for scaling_factor in np.linspace(0, 1, 11):
+                log.info(
+                    f"scaling_factor: {scaling_factor}, num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}"
+                )
+                results["scaling_factor"].append(scaling_factor)
+                model: nn.Module = deepcopy(lora_pretrained_model)
+                model.load_state_dict(
+                    # \tau * \lambda + \theta_0
+                    state_dict_add(
+                        model.state_dict(),
+                        state_dict_mul(task_vector, scaling_factor),
+                        strict=False,
+                    ),
+                    strict=False,
+                )
+                model = fabric.setup_module(model)
+                for dataset_idx, dataset_name in enumerate(dataset_names):
+                    results[f"dataset:{dataset_idx}"].append(dataset_name)
+                for dataset_name in DATASET_NAMES:
+                    log.info(f"evaluating on dataset: {dataset_name}")
+                    score = metric_func[dataset_name](
+                        model, val_loaders[dataset_name], tokenizer
+                    )
+                    results[dataset_name].append(score)
+                print(pd.DataFrame(results))
+
+        results = pd.DataFrame(results)
+        results.to_csv(
+            f"results/{MODEL_NAME}/{finetune_mode}_task_addition_num-tasks={num_tasks}.csv",
+            index=False,
+        )
+
+
 def evaluate_l_lora_task_addition():
     for num_tasks in range(2, len(DATASET_NAMES) + 1):
         assert num_tasks >= 1, "num_tasks must be >= 1"
@@ -814,7 +969,9 @@ def ties_merging(state_dicts: List[Dict[str, Tensor]], k: float):
 
     # Convert the merged vector back to a state dictionary
     reference_state_dict = deepcopy(state_dicts[0])
-    merged_state_dict = tm.vector_to_state_dict(merged_task_vector, reference_state_dict)
+    merged_state_dict = tm.vector_to_state_dict(
+        merged_task_vector, reference_state_dict
+    )
 
     return merged_state_dict
 
@@ -989,6 +1146,11 @@ if __name__ == "__main__":
     # evaluate_l_lora_task_addition()
 
     # ties merging
-    evaluate_fft_ties_merging()
-    evaluate_lora_ties_merging()
-    evaluate_l_lora_ties_merging()
+    # evaluate_fft_ties_merging()
+    # evaluate_lora_ties_merging()
+    # evaluate_l_lora_ties_merging()
+
+    # task arithmetic with p
+    evaluate_fft_task_addition_p()
+    evaluate_lora_task_addition_p()
+    evaluate_l_lora_task_addition_p()

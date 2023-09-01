@@ -10,6 +10,21 @@ from torch import Tensor, nn
 log = logging.getLogger(__name__)
 
 
+def normalize(tensor: Tensor, dim: int = 0, eps: float = 1e-8) -> Tensor:
+    """
+    Normalizes a tensor along a given dimension.
+
+    Args:
+        tensor (Tensor): The tensor to normalize.
+        dim (int, optional): The dimension along which to normalize the tensor. Defaults to 0.
+        eps (float, optional): A small value to add to the denominator to avoid division by zero. Defaults to 1e-8.
+
+    Returns:
+        Tensor: The normalized tensor.
+    """
+    return tensor / torch.clamp(torch.norm(tensor, dim=dim, keepdim=True), min=eps)
+
+
 def state_dict_to_vector(state_dict: Dict[str, Tensor], remove_keys: List[str] = []):
     R"""
     Converts a PyTorch state dictionary to a 1D tensor.
@@ -84,7 +99,7 @@ def topk_values_mask(M: torch.Tensor, K: float = 0.7, return_mask: bool = False)
     _, d = M.shape
     k = int(d * K)
     k = d - k  # Keep top k elements instead of bottom k elements
-    if k <=0:
+    if k <= 0:
         k = 1
 
     # Find the k-th smallest element by magnitude for each row

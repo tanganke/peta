@@ -4,6 +4,19 @@ from torch import Tensor, nn
 from typing import List
 
 
+def num_params_of_state_dict(state_dict: Dict[str, Tensor]):
+    """
+    Returns the number of parameters in a state dict.
+
+    Args:
+        state_dict (Dict[str, Tensor]): The state dict to count the number of parameters in.
+
+    Returns:
+        int: The number of parameters in the state dict.
+    """
+    return sum([state_dict[key].numel() for key in state_dict])
+
+
 def state_dict_flatten(state_dict: Dict[str, Tensor]):
     """
     Flattens a state dict.
