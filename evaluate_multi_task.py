@@ -515,7 +515,7 @@ DATASET_NAMES = [
     val_loaders,
     tokenizer,
 ) = load_task_vectors(MODEL_NAME, DATASET_NAMES)
-val_datasets = {d: val_loaders[d] for d in DATASET_NAMES}
+val_datasets = {d: val_loaders[d].dataset for d in DATASET_NAMES}
 
 
 def get_task_vector(
@@ -1119,6 +1119,7 @@ def evaluate_l_lora_ties_merging():
 
 
 def lorahub_learning(
+    *,
     model: peft.PeftModel,
     tokenizer: AutoTokenizer,
     lora_module_names: List[str],
@@ -1187,11 +1188,25 @@ def lorahub_learning(
     return recommendation.value, model, tokenizer
 
 
-def evaluate_lora_lorahub():
-    finetune_mode = "lora"
-    task_vector_dict = lora_task_vector
-    result_path_template = "results/{MODEL_NAME}/lora_lorahub_num-tasks={num_tasks}.csv"
-    # --------------------------------------------------------------------------------------
+def evaluate_lorahub(
+    *,
+    finetune_mode: str,
+    pretrained_model: peft.PeftModel,
+    task_vectors_as_dict: Dict[str, Dict[str, Tensor]],
+    result_path_template: str,
+):
+    """
+    Evaluates the LoraHub model on all combinations of tasks using a given finetune mode.
+
+    Args:
+        finetune_mode (str): The finetune mode to use.
+        pretrained_model (peft.PeftModel): The pretrained model to use.
+        task_vectors_as_dict (Dict[Dict[str, Tensor]]): A dictionary of task vectors for each task.
+        result_path_template (str): The path template for the result file.
+
+    Returns:
+        None
+    """
     # Iterate over all possible combinations of tasks
     for num_tasks in range(2, len(DATASET_NAMES) + 1):
         assert num_tasks >= 1, "num_tasks must be >= 1"
@@ -1203,7 +1218,57 @@ def evaluate_lora_lorahub():
 
         results = defaultdict(lambda: list())
         for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
-            lorahub_learning()
+            log.info(
+                f"num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}"
+            )
+            from torch.utils.data import ConcatDataset, Subset, random_split
+
+            # truncate the dataset to 10*32 batches
+            truncate_dataset = (
+                lambda dataset: dataset
+                if len(dataset) < 32 * 10
+                else random_split(dataset, [32 * 10, len(dataset) - 32 * 10])[0]
+            )
+            dataset = ConcatDataset(
+                truncate_dataset(val_datasets[d]) for d in dataset_names
+            )
+            _, model, _ = lorahub_learning(
+                model=pretrained_model,
+                tokenizer=tokenizer,
+                lora_module_names=dataset_names,
+                lora_state_dicts=[task_vectors_as_dict[d] for d in dataset_names],
+                dataset=dataset,
+                seed=42,
+                max_inference_step=40,
+            )
+
+            for dataset_idx, dataset_name in enumerate(dataset_names):
+                results[f"dataset:{dataset_idx}"].append(dataset_name)
+            for dataset_name in DATASET_NAMES:
+                log.info(f"evaluating on dataset: {dataset_name}")
+                score = metric_func[dataset_name](
+                    model, val_loaders[dataset_name], tokenizer
+                )
+                results[dataset_name].append(score)
+            print(pd.DataFrame(results))
+
+
+def evaluate_lora_lorahub():
+    evaluate_lorahub(
+        finetune_mode="lora",
+        pretrained_model=lora_pretrained_model,
+        task_vectors_as_dict=lora_task_vector,
+        result_path_template="results/{MODEL_NAME}/lora_lorahub_num-tasks={num_tasks}.csv",
+    )
+
+
+def evluate_l_lora_lorahub():
+    evaluate_lorahub(
+        finetune_mode="l_lora",
+        pretrained_model=l_lora_pretrained_model,
+        task_vectors_as_dict=l_lora_task_vector,
+        result_path_template="results/{MODEL_NAME}/l_lora_lorahub_num-tasks={num_tasks}.csv",
+    )
 
 
 # %%
@@ -1224,6 +1289,7 @@ def parse_args():
             "simple average",
             "task arithmetic",
             "ties merging",
+            "lorahub",
         ],
     )
     verify_str_arg(
@@ -1257,6 +1323,10 @@ if __name__ == "__main__":
             "standard": evaluate_fft_ties_merging,
             "lora": evaluate_lora_ties_merging,
             "l_lora": evaluate_l_lora_ties_merging,
+        },
+        "lorahub": {
+            "lora": evaluate_lora_lorahub,
+            "l_lora": evluate_l_lora_lorahub,
         },
     }
 

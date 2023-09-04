@@ -140,7 +140,10 @@ def load_dataset(
 
 
 def default_get_loss(
-    example_dataset: Dataset, model: PeftModel, batch_size: Optional[int]
+    example_dataset: Dataset,
+    model: PeftModel,
+    batch_size: Optional[int],
+    dataLoader_cls=DataLoader,
 ) -> float:
     """
     Get the loss of the model on the example dataset.
@@ -161,7 +164,7 @@ def default_get_loss(
     )
 
     # use gpu if available
-    train_dataloader = DataLoader(
+    train_dataloader = dataLoader_cls(
         example_dataset,
         collate_fn=default_data_collator,
         batch_size=data_batch_size,
@@ -170,16 +173,16 @@ def default_get_loss(
     train_loss = 0
     with torch.no_grad():
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        for _, batch in enumerate(train_dataloader):
+        for _, batch in enumerate(tqdm(train_dataloader, "compute loss")):
             # to device
             batch = {k: v.to(device) for k, v in batch.items()}
             with torch.no_grad():
                 outputs = model(**batch)
-            loss = outputs.loss
+            loss: Tensor = outputs.loss
             train_loss += loss.detach().float()
     loss = train_loss.float()
     # average loss over the number of examples
-    return float(loss) / len(example_dataset["input"])
+    return float(loss) / len(example_dataset)
 
 
 def default_l1_regularization(weights: List[float]):
@@ -234,9 +237,13 @@ def get_score(
                 final_state_dict[key] = (
                     final_state_dict[key] + weights[i] * lora_state_dict[key]
                 )
+    # check the the set of state dict keys is a subset of the model's state dict keys
+    assert set(final_state_dict.keys()).issubset(
+        model.state_dict().keys()
+    ), "The set of state dict keys is not a subset of the model's state dict keys."
     # reload the model with the new adapter config
     # set_peft_model_state_dict(model, final_state_dict)
-    model.load_state_dict(final_state_dict)
+    model.load_state_dict(final_state_dict, strict=False)
 
     # minimize the metric
     loss = get_loss(example_dataset, model, batch_size)

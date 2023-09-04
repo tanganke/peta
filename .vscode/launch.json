@@ -11,6 +11,20 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
+        },
+        {
+            "name": "lorahub - lora",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceRoot}/evaluate_multi_task.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--method",
+                "lorahub",
+                "--finetune_mode",
+                "lora"
+            ],
+            "justMyCode": true,
         }
     ]
 }
