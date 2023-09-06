@@ -1,0 +1,8 @@
+dataset:0,dataset:1,dataset:2,dataset:3,dataset:4,dataset:5,glue-cola,glue-mnli,glue-mrpc,glue-qqp,glue-rte,glue-sst2,glue-stsb
+glue-cola,glue-mnli,glue-mrpc,glue-qqp,glue-rte,glue-sst2,0.0,0.328125,0.0024509803921568627,0.1625,0.036101083032490974,0.0011467889908256881,
+glue-cola,glue-mnli,glue-mrpc,glue-qqp,glue-rte,glue-stsb,0.003835091083413231,0.123125,0.0,0.0,0.08664259927797834,0.0,0.4217673411043146
+glue-cola,glue-mnli,glue-mrpc,glue-qqp,glue-sst2,glue-stsb,0.0,0.023125,0.25245098039215685,0.0,0.0036101083032490976,0.1938073394495413,0.5598152641855866
+glue-cola,glue-mnli,glue-mrpc,glue-rte,glue-sst2,glue-stsb,0.0028763183125599234,0.343125,0.02696078431372549,0.0,0.4296028880866426,0.0,0.5909580793156262
+glue-cola,glue-mnli,glue-qqp,glue-rte,glue-sst2,glue-stsb,0.0,0.270625,0.0,0.1775,0.36101083032490977,0.0,0.5177011750172298
+glue-cola,glue-mrpc,glue-qqp,glue-rte,glue-sst2,glue-stsb,0.0009587727708533077,0.0,0.04656862745098039,0.0,0.0,0.0022935779816513763,0.3880468513721185
+glue-mnli,glue-mrpc,glue-qqp,glue-rte,glue-sst2,glue-stsb,0.0,0.2775,0.0,0.26625,0.33935018050541516,0.0,0.3549030466071652

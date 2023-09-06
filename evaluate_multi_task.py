@@ -1252,6 +1252,10 @@ def evaluate_lorahub(
                 results[dataset_name].append(score)
             print(pd.DataFrame(results))
 
+        # save results to csv file
+        results = pd.DataFrame(results)
+        results.to_csv(result_path, index=False)
+
 
 def evaluate_lora_lorahub():
     evaluate_lorahub(
