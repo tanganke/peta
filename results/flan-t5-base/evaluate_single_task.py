@@ -6,18 +6,18 @@ extract some hyperparameters from `config` column and add them to the dataframe.
 """
 # %%
 import functools
+import itertools
 import json
 import math
 import os
 import sys
-import seaborn as sns
-import itertools
 
-from IPython.display import display
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
+from IPython.display import display
 from omegaconf import DictConfig
 
 # %%

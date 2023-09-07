@@ -25,6 +25,20 @@
                 "lora"
             ],
             "justMyCode": true,
+        },
+        {
+            "name": "tangent_proj - lora",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceRoot}/evaluate_multi_task.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--method",
+                "tangent_proj",
+                "--finetune_mode",
+                "lora"
+            ],
+            "justMyCode": true,
         }
     ]
 }

@@ -179,3 +179,30 @@ def state_dict_interpolation(
         for state_dict, scalar in zip(state_dicts, scalars):
             interpolated_state_dict[key] += scalar * state_dict[key]
     return interpolated_state_dict
+
+
+def state_dict_weighted_sum(state_dicts: List[Dict[str, Tensor]], weights: List[float]):
+    """
+    Returns the weighted sum of a list of state dicts.
+
+    Args:
+        state_dicts (List[Dict[str, Tensor]]): The list of state dicts to interpolate between.
+        weights (List[float]): The list of weights to use for the weighted sum.
+
+    Returns:
+        Dict: The weighted sum of the state dicts.
+    """
+    assert len(state_dicts) == len(
+        weights
+    ), "The number of state_dicts and weights must be the same"
+    assert len(state_dicts) > 0, "The number of state_dicts must be greater than 0"
+    assert all(
+        [len(state_dicts[0]) == len(state_dict) for state_dict in state_dicts]
+    ), "All state_dicts must have the same number of keys"
+
+    weighted_sum_state_dict = {}
+    for key in state_dicts[0]:
+        weighted_sum_state_dict[key] = torch.zeros_like(state_dicts[0][key])
+        for state_dict, weight in zip(state_dicts, weights):
+            weighted_sum_state_dict[key] += weight * state_dict[key]
+    return weighted_sum_state_dict

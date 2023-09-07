@@ -1275,6 +1275,172 @@ def evluate_l_lora_lorahub():
     )
 
 
+def get_tangent_projection_weights(
+    *,
+    task_vectors_as_dict: Dict[str, Dict[str, Tensor]],
+    dataset_names: List[str],
+    num_gradient_neighbors: int = 1,
+    num_random_projection_steps: int = 20,
+):
+    from peta.tasks.ties_merging import state_dict_to_vector
+
+    K = len(dataset_names)
+    # A(g_k^s), key: (s, k)
+    abnormalities = {}
+    alpha_bar_s_k = {}
+    alpha_s_k = {}
+    for s in range(num_random_projection_steps):
+        # gradient cloud Gs
+        Gs = torch.concat(
+            [
+                state_dict_to_vector(task_vectors_as_dict[d]).view(-1, 1)
+                for d in dataset_names
+            ],
+            dim=1,
+        )
+        assert Gs.dim() == 2, "Gs must be a matrix"
+        for k in range(K):
+            gk = Gs[:, k : k + 1]
+            similarities = [
+                (
+                    i,
+                    torch.nn.functional.cosine_similarity(
+                        gk, Gs[:, i : i + 1], dim=0
+                    ).item(),
+                )
+                for i in range(K)
+                if i != k
+            ]
+            similarities.sort(key=lambda x: x[1], reverse=True)
+            # local design matrix
+            Gk = torch.concat(
+                [Gs[:, i : i + 1] for i, _ in similarities[:num_gradient_neighbors]],
+                dim=1,
+            )
+            assert Gk.dim() == 2, "Gk must be a matrix"
+            # gk-projection
+            proj = Gk @ torch.inverse(Gk.t() @ Gk) @ (Gk.t() @ gk)
+            # calculate the abnormality
+            abnormality = torch.norm(gk - proj).item() ** 2
+            abnormalities[(s, k)] = abnormality
+
+        sigma_alpha_s = np.mean([abnormalities[(s, k)] for k in range(K)])
+
+        for k in range(K):
+            alpha_bar_s_k[(s, k)] = np.exp(-abnormalities[(s, k)] / sigma_alpha_s)
+        for k in range(K):
+            alpha_s_k[(s, k)] = alpha_bar_s_k[(s, k)] / np.sum(
+                [alpha_bar_s_k[(s, i)] for i in range(len(dataset_names))]
+            )
+
+    alpha_k = [
+        np.mean([alpha_s_k[(s, k)] for s in range(num_random_projection_steps)])
+        for k in range(len(dataset_names))
+    ]
+    alpha_k = np.array(alpha_k)
+    alpha_k = alpha_k / np.sum(alpha_k)
+
+    return alpha_k
+
+
+def get_tangent_projection_model(
+    *,
+    pretrained_model: nn.Module,
+    task_vectors_as_dict: Dict[str, Dict[str, Tensor]],
+    dataset_names: List[str],
+    num_gradient_neighbors: int = 1,
+    num_random_projection_steps: int = 20,
+):
+    task_vector_weights = get_tangent_projection_weights(
+        task_vectors_as_dict=task_vectors_as_dict,
+        dataset_names=dataset_names,
+        num_gradient_neighbors=num_gradient_neighbors,
+        num_random_projection_steps=num_random_projection_steps,
+    )
+    log.info(f"get weights {task_vector_weights} for dataests {dataset_names}")
+    model: nn.Module = deepcopy(pretrained_model)
+    final_task_vector = state_dict_weighted_sum(
+        [task_vectors_as_dict[d] for d in dataset_names], task_vector_weights
+    )
+    # check the key of final_task_vector is a subset of model
+    assert set(final_task_vector.keys()).issubset(model.state_dict().keys())
+    model.load_state_dict(
+        state_dict_add(model.state_dict(), final_task_vector, strict=False),
+        strict=False,
+    )
+    return model
+
+
+def evaluate_tangent_projection(
+    *,
+    finetune_mode: str,
+    pretrained_model: nn.Module,
+    task_vectors_as_dict: Dict[str, Dict[str, Tensor]],
+    result_path_template: str,
+):
+    # Iterate over all possible combinations of tasks
+    for num_tasks in range(4, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
+        result_path = result_path_template.format(
+            MODEL_NAME=MODEL_NAME, num_tasks=num_tasks
+        )
+        if os.path.exists(result_path):  # skip if already exists
+            continue
+
+        results = defaultdict(lambda: list())
+        for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            log.info(
+                f"num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}"
+            )
+            model = get_tangent_projection_model(
+                pretrained_model=pretrained_model,
+                task_vectors_as_dict=task_vectors_as_dict,
+                dataset_names=dataset_names,
+                num_gradient_neighbors=1,
+                num_random_projection_steps=20,
+            )
+            model = fabric.setup_module(model)
+            for dataset_idx, dataset_name in enumerate(dataset_names):
+                results[f"dataset:{dataset_idx}"].append(dataset_name)
+            for dataset_name in DATASET_NAMES:
+                log.info(f"evaluating on dataset: {dataset_name}")
+                score = metric_func[dataset_name](
+                    model, val_loaders[dataset_name], tokenizer
+                )
+                results[dataset_name].append(score)
+            print(pd.DataFrame(results))
+
+        results = pd.DataFrame(results)
+        results.to_csv(result_path, index=False)
+
+
+def evaluate_fft_tangent_project():
+    evaluate_tangent_projection(
+        finetune_mode="standard",
+        pretrained_model=fft_pretrained_model,
+        task_vectors_as_dict=fft_task_vector,
+        result_path_template="results/{MODEL_NAME}/fft_tangent_project_num-tasks={num_tasks}.csv",
+    )
+
+
+def evaluate_lora_tangent_project():
+    evaluate_tangent_projection(
+        finetune_mode="lora",
+        pretrained_model=lora_pretrained_model,
+        task_vectors_as_dict=lora_task_vector,
+        result_path_template="results/{MODEL_NAME}/lora_tangent_project_num-tasks={num_tasks}.csv",
+    )
+
+
+def evaluate_l_lora_tangent_project():
+    evaluate_tangent_projection(
+        finetune_mode="l_lora",
+        pretrained_model=l_lora_pretrained_model,
+        task_vectors_as_dict=l_lora_task_vector,
+        result_path_template="results/{MODEL_NAME}/l_lora_tangent_project_num-tasks={num_tasks}.csv",
+    )
+
+
 # %%
 def parse_args():
     import argparse
@@ -1285,26 +1451,6 @@ def parse_args():
     parser.add_argument("--method", type=str, default="simple average")
     parser.add_argument("--finetune_mode", type=str, default="standard")
     args = parser.parse_args()
-
-    verify_str_arg(
-        args.method,
-        "method",
-        [
-            "simple average",
-            "task arithmetic",
-            "ties merging",
-            "lorahub",
-        ],
-    )
-    verify_str_arg(
-        args.finetune_mode,
-        "finetune_mode",
-        [
-            "standard",
-            "lora",
-            "l_lora",
-        ],
-    )
 
     return args
 
@@ -1331,6 +1477,11 @@ if __name__ == "__main__":
         "lorahub": {
             "lora": evaluate_lora_lorahub,
             "l_lora": evluate_l_lora_lorahub,
+        },
+        "tangent_proj": {
+            "standard": evaluate_fft_tangent_project,
+            "lora": evaluate_lora_tangent_project,
+            "l_lora": evaluate_l_lora_tangent_project,
         },
     }
 
