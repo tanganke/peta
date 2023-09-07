@@ -1379,7 +1379,7 @@ def evaluate_tangent_projection(
     result_path_template: str,
 ):
     # Iterate over all possible combinations of tasks
-    for num_tasks in range(4, len(DATASET_NAMES) + 1):
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
         assert num_tasks >= 1, "num_tasks must be >= 1"
         result_path = result_path_template.format(
             MODEL_NAME=MODEL_NAME, num_tasks=num_tasks
