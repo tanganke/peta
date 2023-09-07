@@ -545,6 +545,7 @@ def evaluate_task_arithmetic(
     dataset_names: List[str],
     task_vector: Dict[str, Tensor],
     scaling_factors: List[float],
+    skip_val_datasets: List[str] = [],
 ):
     num_tasks = len(dataset_names)
     # results is a dictionary-like object that is used to store the evaluation results for each task in the multi-task learning setup.
@@ -578,6 +579,8 @@ def evaluate_task_arithmetic(
         for dataset_idx, dataset_name in enumerate(dataset_names):
             results[f"dataset:{dataset_idx}"].append(dataset_name)
         for dataset_name in DATASET_NAMES:
+            if dataset_name in skip_val_datasets:
+                continue
             log.info(f"evaluating on dataset: {dataset_name}")
             score = metric_func[dataset_name](
                 model, val_loaders[dataset_name], tokenizer
@@ -1304,9 +1307,10 @@ def get_tangent_projection_weights(
             similarities = [
                 (
                     i,
-                    torch.nn.functional.cosine_similarity(
-                        gk, Gs[:, i : i + 1], dim=0
-                    ).item(),
+                    # torch.nn.functional.cosine_similarity(
+                    #     gk, Gs[:, i : i + 1], dim=0
+                    # ).item(),
+                    -torch.linalg.norm(gk - Gs[:, i : i + 1]).item(),
                 )
                 for i in range(K)
                 if i != k
@@ -1441,6 +1445,112 @@ def evaluate_l_lora_tangent_project():
     )
 
 
+def evaluate_greedy_task_arithmetic(
+    *,
+    finetune_mode: str,
+    pretrained_model,
+    task_vectors_as_dict: Dict[str, Tensor],
+    result_path_template: str,
+):
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+        assert num_tasks >= 1, "num_tasks must be >= 1"
+        result_path = result_path_template.format(
+            MODEL_NAME=MODEL_NAME, num_tasks=num_tasks
+        )
+        if os.path.exists(result_path):  # skip if already exists
+            continue
+
+        results = defaultdict(lambda: list())
+        for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            log.info(
+                f"num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}"
+            )
+            model: nn.Module = deepcopy(pretrained_model)
+
+            task_vector = task_vectors_as_dict[dataset_names[0]]
+            for i, dataset_name in enumerate(dataset_names):
+                results[f"dataset:{i}"] = dataset_name
+            for dataset_idx, dataset_name in enumerate(dataset_names[1:]):
+                dataset_idx = dataset_idx + 1
+                _task_vector = state_dict_add(
+                    task_vector, task_vectors_as_dict[dataset_name]
+                )
+                _results = evaluate_task_arithmetic(
+                    finetune_mode=finetune_mode,
+                    pretrained_model=model,
+                    task_vector=_task_vector,
+                    dataset_names=dataset_names[: dataset_idx + 1],
+                    scaling_factors=np.linspace(0, 1, 5),
+                    skip_val_datasets=[
+                        d
+                        for d in DATASET_NAMES
+                        if d not in dataset_names[: dataset_idx + 1]
+                    ],
+                )
+                _results = pd.DataFrame(_results)
+
+                # get the `scaling_factor` from the row with max mean score across all datasets in `dataset_names`
+                max_row_id = 0
+                max_mean_score = float("-inf")
+                zero_if_nan = lambda x: 0 if np.isnan(x) else x
+                for row_id in range(len(_results)):
+                    mean_score = np.mean(
+                        [
+                            zero_if_nan(_results.iloc[row_id][d])
+                            for d in dataset_names[: dataset_idx + 1]
+                        ]
+                    )
+                    if mean_score > max_mean_score:
+                        max_mean_score = mean_score
+                        max_row_id = row_id
+                scaling_factor = _results.iloc[max_row_id]["scaling_factor"]
+                task_vector = _task_vector * scaling_factor
+                results[f"scaling_factor:{dataset_idx+1}"] = scaling_factor
+
+            # evaluate
+            model.load_state_dict(
+                state_dict_add(model.state_dict(), task_vector), strict=False
+            )
+            model = fabric.setup_module(model)
+            for dataset_name in DATASET_NAMES:
+                log.info(f"evaluating on dataset: {dataset_name}")
+                score = metric_func[dataset_name](
+                    model, val_loaders[dataset_name], tokenizer
+                )
+                results[dataset_name].append(score)
+            print(pd.DataFrame(results))
+
+        results = pd.DataFrame(results)
+        results.to_csv(result_path, index=False)
+
+
+def evaluate_fft_task_arithmetic():
+    evaluate_greedy_task_arithmetic(
+        finetune_mode="standard",
+        pretrained_model=fft_pretrained_model,
+        task_vectors_as_dict=fft_task_vector,
+        result_path_template="results/{MODEL_NAME}/fft_greedy_task_arithmetic_num-tasks={num_tasks}.csv",
+    )
+
+
+def evaluate_lora_greedy_task_arithmetic():
+    evaluate_greedy_task_arithmetic(
+        finetune_mode="lora",
+        pretrained_model=lora_pretrained_model,
+        task_vectors_as_dict=lora_task_vector,
+        result_path_template="results/{MODEL_NAME}/lora_greedy_task_arithmetic_num-tasks={num_tasks}.csv",
+    )
+
+
+def evaluate_l_lora_task_arithmetic():
+    evaluate_greedy_task_arithmetic(
+        finetune_mode="l_lora",
+        pretrained_model=l_lora_pretrained_model,
+        task_vectors_as_dict=l_lora_task_vector,
+        result_path_template="results/{MODEL_NAME}/l_lora_greedy_task_arithmetic_num-tasks={num_tasks}.csv",
+    )
+
+
 # %%
 def parse_args():
     import argparse
@@ -1459,17 +1569,17 @@ if __name__ == "__main__":
     args = parse_args()
 
     evaluate_functions = {
-        "simple average": {
+        "simple_average": {
             "standard": evaluate_fft_average,
             "lora": evaluate_lora_avg,
             "l_lora": evaluate_l_lora_avg,
         },
-        "task arithmetic": {
+        "task_arithmetic": {
             "standard": evaluate_fft_task_arithmetic,
             "lora": evaluate_lora_task_arithmetic,
             "l_lora": evaluate_l_lora_task_arithmetic,
         },
-        "ties merging": {
+        "ties_merging": {
             "standard": evaluate_fft_ties_merging,
             "lora": evaluate_lora_ties_merging,
             "l_lora": evaluate_l_lora_ties_merging,
@@ -1483,6 +1593,11 @@ if __name__ == "__main__":
             "lora": evaluate_lora_tangent_project,
             "l_lora": evaluate_l_lora_tangent_project,
         },
+        "greedy_task_arithmetic":{
+            "standard": evaluate_fft_task_arithmetic,
+            "lora": evaluate_lora_greedy_task_arithmetic,
+            "l_lora": evaluate_l_lora_task_arithmetic,
+        }
     }
 
     evaluate_functions[args.method][args.finetune_mode]()
