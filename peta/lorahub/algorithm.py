@@ -252,7 +252,7 @@ def get_score(
 
     return metric_val
 
-
+@torch.no_grad()
 def get_final_weights(
     weights: List[float],
     lora_module_list: List[str],

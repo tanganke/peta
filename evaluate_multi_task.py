@@ -1260,6 +1260,15 @@ def evaluate_lorahub(
         results.to_csv(result_path, index=False)
 
 
+def evaluate_fft_lorahub():
+    evaluate_lorahub(
+        finetune_mode="standard",
+        pretrained_model=fft_pretrained_model,
+        task_vectors_as_dict=fft_task_vector,
+        result_path_template="results/{MODEL_NAME}/fft_lorahub_num-tasks={num_tasks}.csv",
+    )
+
+
 def evaluate_lora_lorahub():
     evaluate_lorahub(
         finetune_mode="lora",
@@ -1585,6 +1594,7 @@ if __name__ == "__main__":
             "l_lora": evaluate_l_lora_ties_merging,
         },
         "lorahub": {
+            "standard": evaluate_fft_lorahub,
             "lora": evaluate_lora_lorahub,
             "l_lora": evluate_l_lora_lorahub,
         },
@@ -1593,11 +1603,11 @@ if __name__ == "__main__":
             "lora": evaluate_lora_tangent_project,
             "l_lora": evaluate_l_lora_tangent_project,
         },
-        "greedy_task_arithmetic":{
+        "greedy_task_arithmetic": {
             "standard": evaluate_fft_task_arithmetic,
             "lora": evaluate_lora_greedy_task_arithmetic,
             "l_lora": evaluate_l_lora_task_arithmetic,
-        }
+        },
     }
 
     evaluate_functions[args.method][args.finetune_mode]()
