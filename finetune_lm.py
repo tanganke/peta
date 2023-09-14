@@ -94,6 +94,16 @@ class Seq2SeqLMModule(pl.LightningModule):
 
 
 def _get_submodules(model: nn.Module, key):
+    """
+    Retrieves the parent module, target module, and target module name for a given key in a PyTorch model.
+
+    Args:
+        model (nn.Module): The PyTorch model to retrieve submodules from.
+        key (str): The key representing the submodule to retrieve.
+
+    Returns:
+        Tuple[nn.Module, nn.Module, str]: A tuple containing the parent module, target module, and target module name.
+    """
     parent = model.get_submodule(".".join(key.split(".")[:-1]))
     target_name = key.split(".")[-1]
     target = model.get_submodule(key)
@@ -101,6 +111,15 @@ def _get_submodules(model: nn.Module, key):
 
 
 def linearize_lora_model(model: nn.Module):
+    """
+    Linearizes the LoraLayer modules in a PyTorch model.
+
+    Args:
+        model (nn.Module): The PyTorch model to be linearized.
+
+    Returns:
+        nn.Module: The linearized PyTorch model.
+    """
     for key, module in model.named_modules():
         if isinstance(module, LoraLayer) and isinstance(module, nn.Linear):
             log.debug(f"convert {key} to linearized lora layer")

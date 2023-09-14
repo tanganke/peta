@@ -1,0 +1,7 @@
+\begin{tabular}{lrrlllllllrrrrrrrr}
+\toprule
+{} &  scaling\_factor &     k &  dataset:0 &  dataset:1 &  dataset:2 & dataset:3 & dataset:4 &  dataset:5 &  dataset:6 &  glue-cola &  glue-mnli &  glue-mrpc &  glue-qqp &  glue-rte &  glue-sst2 &  glue-stsb &      mean \\
+\midrule
+4 &             1.0 &  0.25 &  glue-cola &  glue-mnli &  glue-mrpc &  glue-qqp &  glue-rte &  glue-sst2 &  glue-stsb &   0.613615 &    0.11125 &        0.0 &       0.0 &  0.216606 &   0.291284 &        0.0 &  0.176108 \\
+\bottomrule
+\end{tabular}

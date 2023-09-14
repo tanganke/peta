@@ -116,6 +116,13 @@ def dict_params_to_tuple(dict_params: dict):
 
 class LinearizedModelWraper(nn.Module):
     def __init__(self, model: nn.Module, init_model: nn.Module = None):
+        """
+        Initializes a linearized model.
+
+        Args:
+            model (nn.Module): The underlying PyTorch model to be linearized.
+            init_model (nn.Module): The initial PyTorch model used to compute the linearization parameters (default: None).
+        """
         super().__init__()
         self.model = model
         if init_model is None:
@@ -128,6 +135,16 @@ class LinearizedModelWraper(nn.Module):
             p.requires_grad_(False)
 
     def tuple_params_to_dict(self, tuple_params):
+        """
+        Converts a tuple of parameters to a dictionary with keys corresponding to the parameter names.
+
+        Args:
+            tuple_params (Tuple[Tensor, ...]): A tuple of parameters.
+
+        Returns:
+            Dict[str, Tensor]: A dictionary with keys corresponding to the parameter names and values corresponding to the
+            parameter values.
+        """
         assert len(tuple_params) == len(self.params0_keys)
         state_dict = {}
         for k, p in zip(self.params0_keys, tuple_params):
@@ -135,7 +152,16 @@ class LinearizedModelWraper(nn.Module):
         return state_dict
 
     def forward(self, *args, **kwargs):
-        """Computes the linearized model output using a first-order Taylor decomposition."""
+        """
+        Computes the linearized model output using a first-order Taylor decomposition.
+
+        Args:
+            *args: Positional arguments to be passed to the model.
+            **kwargs: Keyword arguments to be passed to the model.
+
+        Returns:
+            torch.Tensor: The output of the linearized model, computed using a first-order Taylor decomposition.
+        """
         params0 = tuple(self.params0_values)
         params = dict_params_to_tuple(OrderedDict(self.named_parameters()))
         dparams = tuple(p - p0 for p, p0 in zip(params, params0))

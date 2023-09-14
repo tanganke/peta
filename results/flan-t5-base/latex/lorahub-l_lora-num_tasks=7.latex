@@ -1,0 +1,7 @@
+\begin{tabular}{llllllllrrrrrrrr}
+\toprule
+{} &  dataset:0 &  dataset:1 &  dataset:2 & dataset:3 & dataset:4 &  dataset:5 &  dataset:6 &  glue-cola &  glue-mnli &  glue-mrpc &  glue-qqp &  glue-rte &  glue-sst2 &  glue-stsb &      mean \\
+\midrule
+0 &  glue-cola &  glue-mnli &  glue-mrpc &  glue-qqp &  glue-rte &  glue-sst2 &  glue-stsb &   0.558965 &      0.295 &        0.0 &  0.454375 &  0.097473 &        0.0 &   0.030691 &  0.205215 \\
+\bottomrule
+\end{tabular}

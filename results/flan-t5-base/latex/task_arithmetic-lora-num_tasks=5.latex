@@ -1,0 +1,27 @@
+\begin{tabular}{lrlllllrrrrrrrr}
+\toprule
+{} &  scaling\_factor &  dataset:0 &  dataset:1 &  dataset:2 &  dataset:3 &  dataset:4 &  glue-cola &  glue-mnli &  glue-mrpc &  glue-qqp &  glue-rte &  glue-sst2 &  glue-stsb &      mean \\
+\midrule
+7   &            0.35 &  glue-cola &  glue-mnli &  glue-mrpc &   glue-qqp &   glue-rte &   0.000959 &   0.025625 &   0.000000 &  0.000625 &  0.472924 &   0.000000 &   0.000000 &  0.071448 \\
+26  &            0.25 &  glue-cola &  glue-mnli &  glue-mrpc &   glue-qqp &  glue-sst2 &   0.404602 &   0.001250 &   0.000000 &  0.000000 &  0.000000 &   0.880734 &   0.000000 &  0.183798 \\
+50  &            0.40 &  glue-cola &  glue-mnli &  glue-mrpc &   glue-qqp &  glue-stsb &   0.103547 &   0.124375 &   0.426471 &  0.001250 &  0.043321 &   0.000000 &   0.212084 &  0.130150 \\
+68  &            0.25 &  glue-cola &  glue-mnli &  glue-mrpc &   glue-rte &  glue-sst2 &   0.511985 &   0.000625 &   0.000000 &  0.000000 &  0.122744 &   0.834862 &   0.000000 &  0.210031 \\
+92  &            0.40 &  glue-cola &  glue-mnli &  glue-mrpc &   glue-rte &  glue-stsb &   0.016299 &   0.248750 &   0.000000 &  0.000000 &  0.732852 &   0.000000 &   0.000000 &  0.142557 \\
+112 &            0.35 &  glue-cola &  glue-mnli &  glue-mrpc &  glue-sst2 &  glue-stsb &   0.277085 &   0.216250 &   0.000000 &  0.000000 &  0.010830 &   0.576835 &   0.426727 &  0.215390 \\
+132 &            0.30 &  glue-cola &  glue-mnli &   glue-qqp &   glue-rte &  glue-sst2 &   0.392138 &   0.092500 &   0.000000 &  0.000000 &  0.097473 &   0.872706 &   0.000000 &  0.207831 \\
+153 &            0.30 &  glue-cola &  glue-mnli &   glue-qqp &   glue-rte &  glue-stsb &   0.255992 &   0.290625 &   0.000000 &  0.000000 &  0.527076 &   0.000000 &   0.000000 &  0.153385 \\
+176 &            0.40 &  glue-cola &  glue-mnli &   glue-qqp &  glue-sst2 &  glue-stsb &   0.032598 &   0.286250 &   0.000000 &  0.000000 &  0.039711 &   0.736239 &   0.317974 &  0.201825 \\
+196 &            0.35 &  glue-cola &  glue-mnli &   glue-rte &  glue-sst2 &  glue-stsb &   0.232023 &   0.447500 &   0.000000 &  0.000000 &  0.527076 &   0.530963 &   0.000000 &  0.248223 \\
+215 &            0.25 &  glue-cola &  glue-mrpc &   glue-qqp &   glue-rte &  glue-sst2 &   0.247363 &   0.000000 &   0.000000 &  0.000000 &  0.000000 &   0.670872 &   0.000000 &  0.131176 \\
+239 &            0.40 &  glue-cola &  glue-mrpc &   glue-qqp &   glue-rte &  glue-stsb &   0.000000 &   0.000000 &   0.303922 &  0.036250 &  0.007220 &   0.000000 &   0.000000 &  0.049627 \\
+257 &            0.25 &  glue-cola &  glue-mrpc &   glue-qqp &  glue-sst2 &  glue-stsb &   0.257910 &   0.000000 &   0.000000 &  0.000000 &  0.000000 &   0.833716 &   0.000000 &  0.155946 \\
+278 &            0.25 &  glue-cola &  glue-mrpc &   glue-rte &  glue-sst2 &  glue-stsb &   0.343241 &   0.000000 &   0.000000 &  0.000000 &  0.000000 &   0.561927 &   0.000000 &  0.129310 \\
+300 &            0.30 &  glue-cola &   glue-qqp &   glue-rte &  glue-sst2 &  glue-stsb &   0.426654 &   0.000000 &   0.000000 &  0.000000 &  0.000000 &   0.794725 &   0.000000 &  0.174483 \\
+321 &            0.30 &  glue-mnli &  glue-mrpc &   glue-qqp &   glue-rte &  glue-sst2 &   0.000000 &   0.030000 &   0.000000 &  0.000000 &  0.350181 &   0.603211 &   0.000000 &  0.140485 \\
+342 &            0.30 &  glue-mnli &  glue-mrpc &   glue-qqp &   glue-rte &  glue-stsb &   0.000000 &   0.171250 &   0.000000 &  0.000000 &  0.498195 &   0.000000 &   0.000000 &  0.095635 \\
+365 &            0.40 &  glue-mnli &  glue-mrpc &   glue-qqp &  glue-sst2 &  glue-stsb &   0.000000 &   0.266875 &   0.303922 &  0.001250 &  0.064982 &   0.457569 &   0.442512 &  0.219587 \\
+385 &            0.35 &  glue-mnli &  glue-mrpc &   glue-rte &  glue-sst2 &  glue-stsb &   0.000000 &   0.405000 &   0.000000 &  0.000000 &  0.602888 &   0.243119 &   0.000000 &  0.178715 \\
+406 &            0.35 &  glue-mnli &   glue-qqp &   glue-rte &  glue-sst2 &  glue-stsb &   0.000000 &   0.446875 &   0.000000 &  0.000000 &  0.527076 &   0.544725 &   0.000000 &  0.216954 \\
+425 &            0.25 &  glue-mrpc &   glue-qqp &   glue-rte &  glue-sst2 &  glue-stsb &   0.000000 &   0.000000 &   0.000000 &  0.000000 &  0.000000 &   0.376147 &   0.000000 &  0.053735 \\
+\bottomrule
+\end{tabular}

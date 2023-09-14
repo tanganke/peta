@@ -1,0 +1,13 @@
+\begin{tabular}{lllllllrrrrrrrr}
+\toprule
+{} &  dataset:0 &  dataset:1 &  dataset:2 & dataset:3 &  dataset:4 &  dataset:5 &  glue-cola &  glue-mnli &  glue-mrpc &  glue-qqp &  glue-rte &  glue-sst2 &  glue-stsb &      mean \\
+\midrule
+0 &  glue-cola &  glue-mnli &  glue-mrpc &  glue-qqp &   glue-rte &  glue-sst2 &   0.001918 &        0.0 &        0.0 &       0.0 &       0.0 &   0.052752 &        0.0 &  0.007810 \\
+1 &  glue-cola &  glue-mnli &  glue-mrpc &  glue-qqp &   glue-rte &  glue-stsb &   0.000000 &        0.0 &        0.0 &       0.0 &       0.0 &   0.000000 &        0.0 &  0.000000 \\
+2 &  glue-cola &  glue-mnli &  glue-mrpc &  glue-qqp &  glue-sst2 &  glue-stsb &   0.000000 &        0.0 &        0.0 &       0.0 &       0.0 &   0.069954 &        0.0 &  0.009993 \\
+3 &  glue-cola &  glue-mnli &  glue-mrpc &  glue-rte &  glue-sst2 &  glue-stsb &   0.000959 &        0.0 &        0.0 &       0.0 &       0.0 &   0.030963 &        0.0 &  0.004560 \\
+4 &  glue-cola &  glue-mnli &   glue-qqp &  glue-rte &  glue-sst2 &  glue-stsb &   0.000000 &        0.0 &        0.0 &       0.0 &       0.0 &   0.006881 &        0.0 &  0.000983 \\
+5 &  glue-cola &  glue-mrpc &   glue-qqp &  glue-rte &  glue-sst2 &  glue-stsb &   0.000000 &        0.0 &        0.0 &       0.0 &       0.0 &   0.018349 &        0.0 &  0.002621 \\
+6 &  glue-mnli &  glue-mrpc &   glue-qqp &  glue-rte &  glue-sst2 &  glue-stsb &   0.000000 &        0.0 &        0.0 &       0.0 &       0.0 &   0.002294 &        0.0 &  0.000328 \\
+\bottomrule
+\end{tabular}
