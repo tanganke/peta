@@ -24,8 +24,8 @@ batch_size: ??? # model.batch_size / num_gpus
 # learning rate 1e-5 and a cosine annealing learning rate schedule with
 # 200 warm-up steps and the AdamW optimizer [58; 75], with weight decay 0.1.
 learning_rate: 0.00001
-warmup_steps: 400
-max_steps: 4000
+warmup_steps: 600
+max_steps: 6000
 weight_decay: 0.1
 
 #* FABRIC ARGUMENTS

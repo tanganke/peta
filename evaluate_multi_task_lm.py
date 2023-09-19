@@ -1239,7 +1239,14 @@ def evaluate_lorahub(
                 model=pretrained_model,
                 tokenizer=tokenizer,
                 lora_module_names=dataset_names,
-                lora_state_dicts=[task_vectors_as_dict[d] for d in dataset_names],
+                lora_state_dicts=[
+                    state_dict_add(
+                        pretrained_model.state_dict(),
+                        task_vectors_as_dict[d],
+                        strict=False,
+                    )
+                    for d in dataset_names
+                ],
                 dataset=dataset,
                 seed=42,
                 max_inference_step=40,
@@ -1461,7 +1468,7 @@ def evaluate_greedy_task_arithmetic(
     task_vectors_as_dict: Dict[str, Tensor],
     result_path_template: str,
 ):
-    for num_tasks in range(2, len(DATASET_NAMES) + 1):
+    for num_tasks in range(4, len(DATASET_NAMES) + 1):
         assert num_tasks >= 1, "num_tasks must be >= 1"
         result_path = result_path_template.format(
             MODEL_NAME=MODEL_NAME, num_tasks=num_tasks

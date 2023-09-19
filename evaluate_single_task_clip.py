@@ -23,8 +23,8 @@ log = logging.getLogger(__name__)
 
 MODEL_NAME = "ViT-B-16"
 MODEL_NAME_OR_PATH = "openai/clip-vit-base-patch16"
-VERSION = 0
-STEPS = 2000
+VERSION = 2
+STEPS = 6000
 DATASET_NAMES = ["Cars", "DTD", "EuroSAT", "GTSRB", "RESISC45", "SUN397", "SVHN"]
 
 
@@ -153,7 +153,8 @@ def load_models_and_datasets():
                 ckpt_path = log_dir / "checkpoints" / f"vision_model-step={STEPS}.pth"
                 state_dict = torch.load(ckpt_path, map_location="cpu")
                 state_dict = {
-                    (".".join(k.split(".")[1:])): p for k, p in state_dict.items()
+                    (".".join(k.split(".")[1:])): p.detach()
+                    for k, p in state_dict.items()
                 }
                 assert set(state_dict.keys()).issubset(
                     pretrained_model.state_dict().keys()
