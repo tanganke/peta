@@ -32,8 +32,18 @@ class SVHNDataModule(pl.LightningDataModule):
         self.test_transform = test_transform
 
         data_dir = os.path.join(root, "svhn")
-        self.train_dataset = datasets.SVHN(data_dir, split="train", download=download)
-        self.test_dataset = datasets.SVHN(data_dir, split="test", download=download)
+        self.train_dataset = datasets.SVHN(
+            data_dir,
+            split="train",
+            download=download,
+            transform=train_transform,
+        )
+        self.test_dataset = datasets.SVHN(
+            data_dir,
+            split="test",
+            download=download,
+            transform=test_transform,
+        )
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, shuffle=True, **self.loader_kwargs)

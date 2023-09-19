@@ -1,0 +1,1 @@
+python3 evaluate_multi_task_clip.py --method ties_merging --finetune_mode standard

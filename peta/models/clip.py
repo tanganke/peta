@@ -1,5 +1,11 @@
+import os
+from typing import Optional
+
+import lightning.pytorch as pl
+import torch
+from peft import LoraConfig, PeftModel, TaskType, get_peft_model
+from torch import Tensor
 from transformers import CLIPModel, CLIPProcessor
-from peft import LoraConfig, TaskType, get_peft_model, PeftModel
 
 CLIP_MODELS = [
     "openai/clip-vit-base-patch16",
@@ -8,9 +14,13 @@ CLIP_MODELS = [
 ]
 
 
-def load_clip_model(model_name_or_path: str):
-    processor = CLIPProcessor.from_pretrained(model_name_or_path)
-    clip_model: CLIPModel = CLIPModel.from_pretrained(model_name_or_path)
+def load_clip_model(model_name_or_path: str, local_files_only: bool = True):
+    processor = CLIPProcessor.from_pretrained(
+        model_name_or_path, local_files_only=local_files_only
+    )
+    clip_model: CLIPModel = CLIPModel.from_pretrained(
+        model_name_or_path, local_files_only=local_files_only
+    )
     return processor, clip_model
 
 
@@ -27,6 +37,8 @@ def freeze_unless_image_model(clip_model: CLIPModel):
     for param in clip_model.parameters():
         param.requires_grad = False
     for param in clip_model.vision_model.parameters():
+        param.requires_grad = True
+    for param in clip_model.visual_projection.parameters():
         param.requires_grad = True
     return clip_model
 

@@ -4,6 +4,8 @@
 /lightning_logs/
 /.hydra/
 /temp/
+*.temp
+*.npy
 
 
 # Byte-compiled / optimized / DLL files

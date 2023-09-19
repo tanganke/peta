@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 import torch
@@ -22,7 +22,7 @@ class CosineAnnealingWithWarmup:
     def __init__(
         self,
         optimizer: torch.optim.Optimizer,
-        base_lrs: float | Tuple[float],
+        base_lrs: Union[float, Tuple[float]],
         warmup_steps: int,
         max_steps: int,
     ):

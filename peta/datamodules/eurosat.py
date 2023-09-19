@@ -22,7 +22,7 @@ class EuroSATDataModule(pl.LightningDataModule):
         root: str,
         batch_size: int,
         num_workers: int,
-        pin_meory: bool = False,
+        pin_memory: bool = False,
         train_transform=None,
         test_transform=None,
     ):
@@ -49,7 +49,7 @@ class EuroSATDataModule(pl.LightningDataModule):
         self.loader_kwargs = {
             "batch_size": batch_size,
             "num_workers": num_workers,
-            "pin_memory": pin_meory,
+            "pin_memory": pin_memory,
         }
 
         self.train_dir = os.path.join(root, "EuroSAT_splits", "train")
@@ -68,6 +68,8 @@ class EuroSATDataModule(pl.LightningDataModule):
         self.test_dataset = datasets.ImageFolder(
             self.test_dir, transform=self.test_transform
         )
+
+        self._init_classnames()
 
     def _init_classnames(self):
         idx_to_class = dict((v, k) for k, v in self.train_dataset.class_to_idx.items())
