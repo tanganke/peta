@@ -20,6 +20,22 @@ if __name__ == "__main__":
     fabric.launch()
 
 
+def skip_if_exist_in_results(dataset_names: List[str], results: Dict[str, List[Any]]):
+    if len(results.keys()) == 0:
+        return False
+    results = pd.DataFrame(results)
+    indices = None
+    for dataset_idx, dataset_name in enumerate(dataset_names):
+        if indices is None:
+            indices = results[f"dataset:{dataset_idx}"] == dataset_name
+        else:
+            indices = indices & (results[f"dataset:{dataset_idx}"] == dataset_name)
+        if indices.sum() == 0:
+            return False
+    log.info(f"skip {dataset_names}")
+    return True
+
+
 def evaluate_accuracy_for_clip_vision_model(
     clip_vision_model, test_loader: DataLoader, classes: List[str]
 ) -> float:
@@ -138,8 +154,13 @@ def evaluate_simple_average_multi_task(
             log.info(f"skip {result_path}")
             continue
 
-        results = defaultdict(lambda: list())
+        if os.path.exists(result_path + ".temp"):
+            results = pd.read_csv(result_path + ".temp").to_dict("list")
+        else:
+            results = defaultdict(lambda: list())
         for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            if skip_if_exist_in_results(dataset_names, results):
+                continue
             log.info(
                 f"num_tasks: {num_tasks}, dataset_names: {dataset_names}, finetune_mode: {finetune_mode}"
             )
@@ -299,8 +320,16 @@ def evaluate_task_arithmetic_multi_task(
         if os.path.exists(result_path):  # skip if already exists
             continue
 
-        results = defaultdict(lambda: list())
+        if os.path.exists(result_path + ".temp"):
+            results = pd.read_csv(result_path + ".temp").to_dict("list")
+        else:
+            results = defaultdict(lambda: list())
         for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            if skip_if_exist_in_results(dataset_names, results):
+                continue
+            log.info(
+                f"num_tasks: {num_tasks}, dataset_names: {dataset_names}, finetune_mode: {finetune_mode}"
+            )
             task_vector = get_task_vector(task_vector_dict, dataset_names)
             _results = evaluate_task_arithmetic(
                 finetune_mode=finetune_mode,
@@ -479,7 +508,7 @@ def evaluate_ties_merging_multi_task(
     Returns:
         None
     """
-    for num_tasks in range(4, len(DATASET_NAMES) + 1):
+    for num_tasks in range(2, len(DATASET_NAMES) + 1):
         assert num_tasks >= 1, "num_tasks must be >= 1"
         result_path = result_path_template.format(
             MODEL_NAME=MODEL_NAME, num_tasks=num_tasks
@@ -487,8 +516,13 @@ def evaluate_ties_merging_multi_task(
         if os.path.exists(result_path):  # skip if already exists
             continue
 
-        results = defaultdict(lambda: list())
+        if os.path.exists(result_path + ".temp"):
+            results = pd.read_csv(result_path + ".temp").to_dict("list")
+        else:
+            results = defaultdict(lambda: list())
         for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            if skip_if_exist_in_results(dataset_names, results):
+                continue
             for k in [0.25, 0.5, 0.75, 1]:
                 _results = evaluate_ties_merging(
                     k=k,
@@ -688,13 +722,18 @@ def evaluate_lorahub(
         if os.path.exists(result_path):  # skip if already exists
             continue
 
-        results = defaultdict(lambda: list())
+        if os.path.exists(result_path + ".temp"):
+            results = pd.read_csv(result_path + ".temp").to_dict("list")
+        else:
+            results = defaultdict(lambda: list())
         for dataset_names in itertools.combinations(DATASET_NAMES, num_tasks):
+            if skip_if_exist_in_results(dataset_names, results):
+                continue
             log.info(
                 f"num_tasks: {num_tasks}, finetune_mode: {finetune_mode}, datset_names: {dataset_names}"
             )
 
-            _, model, _ = lorahub_learning(
+            _, model = lorahub_learning(
                 model=pretrained_model,
                 lora_module_names=dataset_names,
                 lora_state_dicts=[
@@ -720,6 +759,8 @@ def evaluate_lorahub(
                     classes=datamodules[dataset_name].classes,
                 )
                 results[dataset_name].append(score)
+            # save intermediate results
+            pd.DataFrame(results).to_csv(result_path + ".temp", index=False)
             print(pd.DataFrame(results))
 
         # save results to csv file

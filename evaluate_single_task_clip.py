@@ -44,6 +44,7 @@ def evaluate_accuracy(
 
     correct, count = 0, 0
     with TitledLog("Evaluate accuracy", log_fn=log.info):
+        test_loader.shuffle = False
         for batch in tqdm(test_loader):
             images, labels = batch
             with torch.no_grad():
