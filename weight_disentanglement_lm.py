@@ -1,5 +1,5 @@
 # import state dicts and so on from evaluate_multi_task.py
-from evaluate_multi_task import *
+from evaluate_multi_task_lm import *
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
