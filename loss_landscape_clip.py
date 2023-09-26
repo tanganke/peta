@@ -130,6 +130,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(usage=str(DATASET_NAMES))
     parser.add_argument(
+        "--method",
+        type=str,
+        default="standard",
+    )
+    parser.add_argument(
         "task_one",
         type=str,
     )
@@ -139,6 +144,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    method = args.method
     task_one = args.task_one
     task_two = args.task_two
 
@@ -147,36 +153,39 @@ if __name__ == "__main__":
     # --- 0 --- 2
     #     |
     #     1
-    model_start: nn.Module = deepcopy(pretrained_clip_vision_models["standard"])
-    model_end_one: nn.Module = deepcopy(pretrained_clip_vision_models["standard"])
-    model_end_two: nn.Module = deepcopy(pretrained_clip_vision_models["standard"])
+    model_start: nn.Module = deepcopy(pretrained_clip_vision_models[method])
+    model_end_one: nn.Module = deepcopy(pretrained_clip_vision_models[method])
+    model_end_two: nn.Module = deepcopy(pretrained_clip_vision_models[method])
     model_start.load_state_dict(
         state_dict_add(
             model_start.state_dict(),
             state_dict_add(
-                finetuned_clip_vison_models_task_vectors["standard"][task_one],
-                finetuned_clip_vison_models_task_vectors["standard"][task_two],
+                finetuned_clip_vison_models_task_vectors[method][task_one],
+                finetuned_clip_vison_models_task_vectors[method][task_two],
             ),
             strict=False,
-        )
+        ),
+        strict=False,
     )
     model_end_one.load_state_dict(
         state_dict_add(
             model_end_one.state_dict(),
             state_dict_mul(
-                finetuned_clip_vison_models_task_vectors["standard"][task_one], 2.0
+                finetuned_clip_vison_models_task_vectors[method][task_one], 2.0
             ),
             strict=False,
-        )
+        ),
+        strict=False,
     )
     model_end_two.load_state_dict(
         state_dict_add(
             model_end_two.state_dict(),
             state_dict_mul(
-                finetuned_clip_vison_models_task_vectors["standard"][task_two], 2.0
+                finetuned_clip_vison_models_task_vectors[method][task_two], 2.0
             ),
             strict=False,
-        )
+        ),
+        strict=False,
     )
 
     landscape = loss_landscapes.planar_interpolation(
@@ -186,4 +195,4 @@ if __name__ == "__main__":
         metric=MultiTaskLoss([task_one, task_two]),
         deepcopy_model=False,
     )
-    np.save(f"results/ViT-B-16/landscape_{task_one}-{task_two}.npy", landscape)
+    np.save(f"results/ViT-B-16/{method}_landscape_{task_one}-{task_two}.npy", landscape)
