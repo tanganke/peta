@@ -138,7 +138,6 @@ class PyTorchGTSRB(VisionDataset):
 
 
 class GTSRBDataModule(pl.LightningDataModule):
-
     # from https://github.com/openai/CLIP/blob/e184f608c5d5e58165682f7c332c3a8b4c1545f2/data/prompts.md
     classes = [
         "red and white circle 20 kph speed limit",

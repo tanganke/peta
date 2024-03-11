@@ -12,10 +12,10 @@ from peft.utils.save_and_load import (
     get_peft_model_state_dict,
     set_peft_model_state_dict,
 )
+from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, default_data_collator
-from torch import Tensor
 
 
 def load_base_model_and_lora_modules(
@@ -251,6 +251,7 @@ def get_score(
     metric_val = loss + get_regular(weights)
 
     return metric_val
+
 
 @torch.no_grad()
 def get_final_weights(

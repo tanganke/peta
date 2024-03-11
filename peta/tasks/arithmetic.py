@@ -1,7 +1,7 @@
+from typing import Dict, List
+
 import torch
-from typing import Dict
 from torch import Tensor, nn
-from typing import List
 
 
 def state_dicts_check_keys(state_dicts: List[Dict[str, Tensor]]):

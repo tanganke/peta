@@ -1,15 +1,12 @@
 import os
 import re
+import shutil
+from pathlib import Path
 from typing import List
 
 import lightning.pytorch as pl
 import torchvision.datasets as datasets
 from torch.utils.data import DataLoader
-
-
-import os
-import shutil
-from pathlib import Path
 
 
 def process_dataset(txt_file, downloaded_data_path, output_folder):

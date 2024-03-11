@@ -2,13 +2,14 @@ import abc
 import os
 from typing import Any, Callable, Dict, Optional, Tuple
 
+import lightning.pytorch as pl
 import numpy as np
 import torch
 from torch import Tensor
-import lightning.pytorch as pl
-from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, Dataset
+from torchvision.datasets import ImageFolder
 from torchvision.datasets.folder import default_loader as pil_loader
+
 
 # modified from: https://github.com/microsoft/torchgeo
 class VisionDataset(Dataset[Dict[str, Any]], abc.ABC):

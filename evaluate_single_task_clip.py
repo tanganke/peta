@@ -16,7 +16,7 @@ from tqdm import tqdm
 from transformers import CLIPModel, CLIPProcessor
 
 from finetune_clip import load_clip_model, load_clip_processor_and_model
-from peta.tasks.arithmetic import state_dict_add, state_dict_sub, state_dict_mul
+from peta.tasks.arithmetic import state_dict_add, state_dict_mul, state_dict_sub
 from peta.utils import TitledLog
 
 log = logging.getLogger(__name__)

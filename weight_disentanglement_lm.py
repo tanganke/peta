@@ -1,10 +1,10 @@
 # import state dicts and so on from evaluate_multi_task.py
-from evaluate_multi_task_lm import *
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
 import torch.nn.functional as F
+
+from evaluate_multi_task_lm import *
 from peta.tasks.ties_merging import (
     normalize,
     state_dict_to_vector,

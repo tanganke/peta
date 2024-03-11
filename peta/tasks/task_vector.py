@@ -1,9 +1,9 @@
 import abc
 import logging
+import math
 from typing import Dict, Iterable
 
 import numpy as np
-import math
 import torch
 from torch import Tensor, nn
 

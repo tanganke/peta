@@ -1,17 +1,19 @@
-from evaluate_single_task_clip import *
 import functools
 import itertools
 import os
-from typing import Dict, List, Tuple, Any, Union
-from torch import nn, Tensor
+import random
+from functools import partial
+from typing import Any, Dict, List, Tuple, Union
+
+import numpy
 import numpy as np
 import peft
-import numpy
-from peta.tasks.arithmetic import *
-import random
-from torch.utils.data import Dataset
-from functools import partial
+from torch import Tensor, nn
 from torch.nn import functional as F
+from torch.utils.data import Dataset
+
+from evaluate_single_task_clip import *
+from peta.tasks.arithmetic import *
 
 log = logging.getLogger(__name__)
 
