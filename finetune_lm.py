@@ -130,15 +130,9 @@ def linearize_lora_model(model: nn.Module):
 
 def load_model_from_config(cfg: DictConfig):
     # FIXME remove in the future
-    local_files_only = True
-    proxy = {"http": "10.254.21.97:10809"}
 
-    tokenizer = instantiate(
-        cfg.model.tokenizer, local_files_only=local_files_only, proxies=proxy
-    )
-    model = instantiate(
-        cfg.model.model, local_files_only=local_files_only, proxies=proxy
-    )
+    tokenizer = instantiate(cfg.model.tokenizer)
+    model = instantiate(cfg.model.model)
     if cfg.peft.peft_config is not None:
         peft_config: peft.PeftConfig = instantiate(cfg.peft.peft_config)
         #  https://github.com/huggingface/peft/issues/567
@@ -205,9 +199,11 @@ def main(cfg: DictConfig):
             preprocessor = instantiate(
                 cfg.dataset.preprocessor,
                 tokenizer=tokenizer,
-                tokenizer_kwargs=cfg.model.tokenizer_kwargs
-                if hasattr(cfg.model, "tokenizer_kwargs")
-                else None,
+                tokenizer_kwargs=(
+                    cfg.model.tokenizer_kwargs
+                    if hasattr(cfg.model, "tokenizer_kwargs")
+                    else None
+                ),
             )
             datasets = datasets.map(
                 preprocessor,
