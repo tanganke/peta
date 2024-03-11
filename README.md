@@ -1,4 +1,4 @@
-# Parameter-Efficient Task Arithmetic
+# Parameter Efficient Multi-task Model Fusion with Partial Linearization
 
 Code for paper "Parameter Efficient Multi-task Model Fusion with Partial Linearization"
 ([Arixv](https://arxiv.org/abs/2310.04742))
