@@ -1,0 +1,7 @@
+torch
+rich
+datasets
+transformers
+lightning
+hydra-core
+peft

@@ -1,0 +1,8 @@
+# civil_comments
+# https://huggingface.co/datasets/civil_comments
+name: civil_comments
+
+datasets:
+  _target_: datasets.load_dataset
+  _args_:
+    - civil_comments

@@ -1,0 +1,15 @@
+name: glue-qqp
+
+datasets:
+  _target_: datasets.load_dataset
+  path: glue
+  name: qqp
+
+preprocessor:
+  _target_: peta.tasks.QQP_Preprocessor
+
+map_kwargs:
+  remove_columns: ["question1", "question2", "label", "idx"]
+  batched: true
+  num_proc: 1
+  desc: Running tokenizer on dataset

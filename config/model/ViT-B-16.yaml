@@ -1,0 +1,4 @@
+name: ViT-B-16
+model_name_or_path: openai/clip-vit-base-patch16
+batch_size: 64
+input_size: 224

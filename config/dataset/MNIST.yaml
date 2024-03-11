@@ -1,0 +1,10 @@
+name: MNIST
+
+datamodule:
+  _target_: peta.datamodules.MNISTDataModule
+  root: data
+  batch_size: ${batch_size}
+  num_workers: ${num_workers}
+  pin_memory: false
+  train_transform: null
+  test_transform: null

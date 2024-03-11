@@ -1,0 +1,44 @@
+defaults:
+  - model: ViT-B-16
+  - dataset: Cars
+  - _self_
+
+seed: 42
+fast_debug_dev: false
+
+# model
+model_name: ${model.name}
+
+finetuning_mode: lora # only for logging: 'standard', 'lora', 'l_lora'
+lora_config:
+  _target_: peft.LoraConfig
+  target_modules:
+    - v_porj
+    - q_proj
+  inference_mode: false
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.1
+linearized_lora: false
+
+# data
+datamodule: ${dataset.datamodule}
+dataset_name: ${dataset.name}
+num_workers: 12
+batch_size: ??? # model.batch_size / num_gpus
+
+#* EDITING MODELS WITH TASK ARITHMETIC. Appendix B
+# Namely, we fine-tune for 2000 iterations with a batch size of 128,
+# learning rate 1e-5 and a cosine annealing learning rate schedule with
+# 200 warm-up steps and the AdamW optimizer [58; 75], with weight decay 0.1.
+learning_rate: 0.00001
+warmup_steps: 600
+max_steps: 6000
+weight_decay: 0.1
+
+#* FABRIC ARGUMENTS
+# https://lightning.ai/docs/fabric/stable/api/fabric_args.html
+fabric:
+  accelerator: gpu
+  # strategy: deepspeed
+  devices: 1

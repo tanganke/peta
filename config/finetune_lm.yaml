@@ -1,0 +1,23 @@
+defaults:
+  - model: flan-t5-base
+  - peft: nopeft
+  - dataset: glue-cola
+  - optim: adam
+  - _self_
+
+seed: 42
+
+# DataLoader
+batch_size: 32
+num_workers: 8
+
+# pytorch lightning Trainer
+trainer:
+  accelerator: gpu
+  devices: 4
+  max_epochs: null
+  max_steps: 100
+  accumulate_grad_batches: 1
+  profiler: simple
+  enable_checkpointing: false # manually save checkpoints
+  fast_dev_run: false

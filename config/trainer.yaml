@@ -1,0 +1,4 @@
+# pytorch lightning Trainer
+trainer:
+  devices: ${device}
+  max_epochs: ${epochs}
